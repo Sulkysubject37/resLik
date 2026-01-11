@@ -17,3 +17,18 @@ ResLik operates on **embeddings** ($\mathbb{R}^d$), not raw data (counts, intens
 - **Performance:** Gating operations on millions of cells/samples require efficient vectorized SIMD instructions.
 - **Portability:** A C++ core ensures the logic can be wrapped for R, Julia, or mobile applications in the future.
 - **Python Ecosystem:** Data loading and orchestration remain in Python for compatibility with PyTorch/Scanpy/JAX.
+
+## 4. Regularization Sensitivity & Dead-Zone Gating (Phase 4.5 Update)
+ResLik introduces two hyperparameters to control its intervention:
+- **$\lambda$ (Lambda):** The sensitivity to discrepancy.
+- **$\tau$ (Tau):** The dead-zone threshold.
+
+**Why?**
+Early benchmarks showed that without a dead-zone ($\tau=0$), ResLik would slightly gate even perfectly clean data due to the natural tails of the Gaussian distribution.
+- **$\tau$** defines a "safe zone" (e.g., within 0.8 std devs) where no gating occurs.
+- **$\lambda$** defines how aggressively to gate once outside that zone.
+
+**Trade-off:**
+Increasing $\tau$ preserves clean data but reduces sensitivity to small noise.
+Increasing $\lambda$ crushes outliers but risks over-regularizing valid biological variation.
+There is no "perfect" default; it depends on your tolerance for false positives vs. false negatives.
