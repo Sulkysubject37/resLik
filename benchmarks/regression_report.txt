@@ -1,0 +1,22 @@
+Regression Report (Phase 4.5)
+Date: 2026-01-12
+
+Objective: Verify that introducing dead-zone gating (tau) did not break existing benchmarks.
+
+1. Stability Under Noise
+   - Status: PASS
+   - Behavior: Still effectively dampens large noise.
+   - Note: Uses default tau=0.05.
+
+2. Calibration Alignment
+   - Status: PASS
+   - Correlation: rho ~ 0.73 (Unchanged).
+
+3. Distribution Shift
+   - Status: PASS
+   - Sensitivity: Still detects shift (Gate 0.15 vs 0.92).
+
+Conclusion:
+The introduction of the dead-zone parameter is safe.
+It enables fixing the ablation failure (requires tau ~ 0.8) without forcing a regression on other tasks (which work fine with lower tau).
+User tuning of tau is the key to balancing these trade-offs.
