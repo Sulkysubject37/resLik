@@ -66,6 +66,9 @@ class ResLikUnit:
         # Input Validation
         z_in = np.asarray(z_in, dtype=np.float32)
         
+        if z_in.size == 0:
+            raise ValueError("Input array is empty. See docs/failure_modes.md.")
+
         if z_in.ndim == 1:
             is_batch = False
             z_in = z_in[np.newaxis, :]
@@ -75,13 +78,22 @@ class ResLikUnit:
             raise ValueError(f"Input must be 1D or 2D array, got {z_in.ndim}D.")
             
         if z_in.shape[1] != self.input_dim:
-            raise ValueError(f"Input feature dimension {z_in.shape[1]} does not match initialized dimension {self.input_dim}.")
+            raise ValueError(
+                f"Input feature dimension {z_in.shape[1]} does not match initialized dimension {self.input_dim}. "
+                "Ensure your encoder output matches ResLik configuration."
+            )
             
         if not np.all(np.isfinite(z_in)):
-            raise ValueError("Input contains NaNs or Infinities.")
+            raise ValueError(
+                "Input contains NaNs or Infinities. ResLik requires clean, finite embeddings. "
+                "See docs/failure_modes.md for details on numerical stability."
+            )
             
         if ref_std <= 0:
-            raise ValueError(f"Reference standard deviation must be positive, got {ref_std}.")
+            raise ValueError(
+                f"Reference standard deviation must be positive, got {ref_std}. "
+                "Invalid reference statistics will cause gating failure."
+            )
 
         # Set Unit State
         self._cpp_unit.set_reference_stats(ref_mean, ref_std)
