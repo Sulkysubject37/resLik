@@ -21,4 +21,4 @@ cpp/build/
 .DS_Store
 .vscode/
 .idea/
-reslik/
+/reslik/
