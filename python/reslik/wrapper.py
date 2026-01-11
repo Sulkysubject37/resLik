@@ -1,3 +1,6 @@
+import numpy as np
+from typing import Tuple, Dict, Any, Optional, Union
+import warnings
 from . import _core
 from .diagnostics import ResLikDiagnostics, wrap_diagnostics
 
@@ -27,7 +30,7 @@ class ResLikUnit:
         self._cpp_unit = _core.ResLikUnit(input_dim, latent_dim)
         
     def __call__(self, 
-                 z_in: np.ndarray, 
+                 z_in: Union[np.ndarray, Any], 
                  ref_mean: float = 0.0, 
                  ref_std: float = 1.0, 
                  gating_lambda: float = 1.0) -> Tuple[np.ndarray, ResLikDiagnostics]:
@@ -35,7 +38,7 @@ class ResLikUnit:
         Apply ResLik gating to the input embeddings.
         
         Args:
-            z_in (np.ndarray): Input feature matrix of shape (n_samples, input_dim) 
+            z_in (Union[np.ndarray, torch.Tensor]): Input feature matrix of shape (n_samples, input_dim) 
                                or vector of shape (input_dim,).
             ref_mean (float): Reference mean for the current feature set. 
                               (Currently shared scalar for Phase 2).
@@ -45,9 +48,21 @@ class ResLikUnit:
                                    
         Returns:
             Tuple[np.ndarray, ResLikDiagnostics]: 
-                - Gated output embeddings (n_samples, latent_dim)
+                - Gated output embeddings (n_samples, latent_dim) as NumPy array.
                 - Structured diagnostics object.
         """
+        # Interop: Check for PyTorch Tensor
+        if hasattr(z_in, 'cpu') and hasattr(z_in, 'detach') and hasattr(z_in, 'numpy'):
+            # It looks like a PyTorch tensor
+            if z_in.requires_grad:
+                warnings.warn(
+                    "ResLik received a tensor with requires_grad=True. "
+                    "Gradients will NOT flow through ResLik (it is a C++ inference op). "
+                    "Detaching tensor implicitly.",
+                    UserWarning
+                )
+            z_in = z_in.detach().cpu().numpy()
+
         # Input Validation
         z_in = np.asarray(z_in, dtype=np.float32)
         
