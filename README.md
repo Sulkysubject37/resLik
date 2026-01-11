@@ -62,7 +62,7 @@ Based on falsification-driven benchmarks:
 
 ## Core Idea (High-Level)
 
-Given feature embeddings \( z_i \in \mathbb{R}^d \), ResLik:
+Given feature embeddings $z_i \in \mathbb{R}^d$, ResLik:
 1. Normalizes embeddings for numerical stability  
 2. Applies a shared feed-forward transformation  
 3. Learns a **data-dependent scale** per feature  
