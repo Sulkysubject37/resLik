@@ -31,6 +31,7 @@ struct ResLikUnit::Impl {
 
     // Gating Sensitivity for Step 5
     float lambda = 1.0f;
+    float tau = 0.0f; // Dead-zone threshold
 
     // Diagnostics Storage
     diagnostics::DiagnosticReport last_report;
@@ -77,6 +78,10 @@ void ResLikUnit::set_lambda(float lambda) {
     pImpl->lambda = lambda;
 }
 
+void ResLikUnit::set_tau(float tau) {
+    pImpl->tau = std::max(0.0f, tau);
+}
+
 std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     if (input.size() != static_cast<size_t>(pImpl->input_dim)) {
         throw std::runtime_error("Input dimension mismatch in ResLikUnit::forward");
@@ -98,17 +103,20 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
 
     // Step 4: Likelihood-Consistency Discrepancy (theory.md Step 4)
     float C = diagnostics::compute_discrepancy(input, pImpl->mu_ref, pImpl->sigma_ref);
+    
+    // Apply Dead-Zone Thresholding
+    float C_eff = std::max(0.0f, C - pImpl->tau);
 
     // Step 5: Multiplicative Consistency Gating (theory.md Step 5)
-    // Equation: z' = a * exp(-lambda * C)
-    float gate = std::exp(-pImpl->lambda * C);
+    // Equation: z' = a * exp(-lambda * C_eff)
+    float gate = std::exp(-pImpl->lambda * C_eff);
     
     std::vector<float> output = a;
     for (float& val : output) val *= gate;
 
     // Store diagnostics
     pImpl->last_report.mean_gate_value = gate; // Since gate is scalar per sample here (shared logic simplification)
-    pImpl->last_report.max_discrepancy = C;
+    pImpl->last_report.max_discrepancy = C; // Report RAW discrepancy for diagnostics
     // Collapsed features detection stub
     pImpl->last_report.collapsed_features.clear();
 

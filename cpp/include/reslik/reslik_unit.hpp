@@ -43,6 +43,12 @@ public:
     void set_lambda(float lambda);
 
     /**
+     * @brief Set the discrepancy dead-zone threshold tau.
+     * Gating will only activate if discrepancy > tau.
+     */
+    void set_tau(float tau);
+
+    /**
      * @brief Get the internal state diagnostics.
      * 
      * @return DiagnosticReport Structure containing diagnostic data.

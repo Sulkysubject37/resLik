@@ -33,7 +33,8 @@ class ResLikUnit:
                  z_in: Union[np.ndarray, Any], 
                  ref_mean: float = 0.0, 
                  ref_std: float = 1.0, 
-                 gating_lambda: float = 1.0) -> Tuple[np.ndarray, ResLikDiagnostics]:
+                 gating_lambda: float = 1.0,
+                 gating_tau: float = 0.05) -> Tuple[np.ndarray, ResLikDiagnostics]:
         """
         Apply ResLik gating to the input embeddings.
         
@@ -45,6 +46,8 @@ class ResLikUnit:
             ref_std (float): Reference standard deviation. Must be > 0.
             gating_lambda (float): Sensitivity of the gating mechanism. Higher values
                                    mean stricter filtering of outliers.
+            gating_tau (float): Dead-zone threshold. Discrepancy scores below this
+                                value are ignored (gate = 1.0). Helps preserve clean data.
                                    
         Returns:
             Tuple[np.ndarray, ResLikDiagnostics]: 
@@ -98,6 +101,7 @@ class ResLikUnit:
         # Set Unit State
         self._cpp_unit.set_reference_stats(ref_mean, ref_std)
         self._cpp_unit.set_lambda(gating_lambda)
+        self._cpp_unit.set_tau(gating_tau)
         
         # Process Batch (Looping in Python for Phase 2/3 simplicity, C++ handles single vector)
         # Future optimization: Move batch loop to C++
