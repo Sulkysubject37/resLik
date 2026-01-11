@@ -3,7 +3,7 @@
 ResLik relies on statistical assumptions. When these are violated, it will fail.
 
 ## 1. Distribution Shift in Reference
-If the "reference" statistics (\(\mu_{ref}, \sigma_{ref}\)) are computed on a population that is systematically different from the test data (e.g., different age group, different sequencing protocol), ResLik will aggressively gate *everything* as "implausible."
+If the "reference" statistics ($\mu_{ref}, \sigma_{ref}$) are computed on a population that is systematically different from the test data (e.g., different age group, different sequencing protocol), ResLik will aggressively gate *everything* as "implausible."
 **Symptom:** Output embeddings collapse to near-zero.
 
 ## 2. Heavy-Tailed Distributions
