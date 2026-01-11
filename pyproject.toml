@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "reslik"
-version = "0.0.1"
+version = "1.0.0"
 description = "Residual Likelihood-Gated Representation Unit"
 readme = "README.md"
 license = { file = "LICENSE" }
