@@ -17,7 +17,15 @@ export CXX=/usr/bin/clang++
 
 echo "Building C++ core and Python bindings using $PYTHON..."
 
-# Use the venv's pip to install in editable mode with verbose output
+# Use the venv's pip to install in editable mode
 $PIP install . -v
+
+# Explicit C++ build for unit tests
+mkdir -p cpp/build
+pushd cpp/build
+PYBIND11_CMAKEDIR=$(../../reslik/bin/python -m pybind11 --cmakedir)
+cmake .. -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_C_COMPILER=$CC -Dpybind11_DIR=$PYBIND11_CMAKEDIR
+make -j4
+popd
 
 echo "Build complete."
