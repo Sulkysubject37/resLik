@@ -1,154 +1,52 @@
-# ResLik: Residual Likelihood–Gated Representation Unit
+# Theory: The Minimal Res-Lik Unit (MRLU)
 
-## 1. Motivation
+## 1. Formal Definition
 
-Modern biological models learn high-capacity representations but suffer from:
-- overconfidence under distribution shift,
-- instability due to noisy features,
-- lack of feature-level diagnostics.
+The **ResLik Unit** transforms an input embedding $z \in \mathbb{R}^d$ into a gated representation $z' \in \mathbb{R}^d$ by modulating features based on their likelihood under an empirical reference distribution.
 
-ResLik introduces a **likelihood-consistency–gated residual unit** that operates on
-feature embeddings *independently of modality*, encouraging representations to
-respect empirical biological expectations without enforcing hard constraints.
+The transformation follows five steps:
 
-This unit is **regularizing, not generative**, and **diagnostic, not causal**.
+### Step 1: Pre-Normalization
+We enforce numerical stability by centering and scaling the input:
+$$
+\hat{z} = \frac{z - \mu_{batch}}{\sigma_{batch} + \epsilon}
+$$
+*Note: In inference mode, running statistics are used.*
 
----
+### Step 2: Shared Feed-Forward Transformation
+A shallow non-linear projection captures feature interactions:
+$$
+h = \sigma(W_1 \hat{z} + b_1)
+$$
+where $\sigma$ is typically ReLU or GeLU.
 
-## 2. Input Assumptions
+### Step 3: Learned Scale
+We learn a data-dependent scale factor for each feature dimension:
+$$
+s = \exp(W_2 h + b_2)
+$$
+This scale allows the network to dynamically adjust sensitivity.
 
-Let:
-- \( z_i \in \mathbb{R}^d \) be the embedding of feature \( i \)
-  (gene, CpG, protein, metabolite, etc.)
-- \( \mu_i^{ref}, \sigma_i^{ref} \) be empirical reference statistics
-  estimated from training data
+### Step 4: Discrepancy Calculation
+We define a "discrepancy score" $D(z)$ that measures how far the current embedding deviates from expected biological priors (modeled via reference statistics):
+$$
+D(z)_j = \left| \frac{z_j - \mu_{ref, j}}{\sigma_{ref, j}} \right|
+$$
 
-No assumptions are made about:
-- biological networks,
-- pathways,
-- omics modality,
-- downstream likelihood.
+### Step 5: Multiplicative Gating
+The final output is the original input modulated by a soft gate derived from the discrepancy and learned scale:
+$$
+g = \text{sigmoid}(-s \cdot D(z))
+$$
+$$
+z' = z \odot g
+$$
 
----
+## 2. Assumptions
+1.  **Reference Statistics exist:** We assume access to a "healthy" or "baseline" distribution to compute $\mu_{ref}$ and $\sigma_{ref}$.
+2.  **Feature Independence in Gating:** The discrepancy is calculated element-wise, assuming that extreme deviation in one feature dimension is independently informative (though the learned scale $s$ can capture correlations).
+3.  **Unimodality:** The simple discrepancy metric assumes the reference distribution is roughly unimodal. Multimodal distributions may require a mixture-model approach (out of scope for Phase 1).
 
-## 3. Pre-Normalization
-
-Each feature embedding is normalized independently:
-
-\[
-\tilde{z}_i = \frac{z_i - \mu(z_i)}{\sigma(z_i) + \epsilon}
-\]
-
-This stabilizes optimization and removes scale dependence from upstream encoders.
-
----
-
-## 4. Feed-Forward Projection
-
-A shared feed-forward transformation is applied:
-
-\[
-f_i = \phi(W \tilde{z}_i + b)
-\]
-
-Where:
-- \( W \in \mathbb{R}^{d \times d} \)
-- \( \phi \) is a smooth nonlinearity (e.g. GELU, SiLU)
-
-Weights are **shared across features**, enforcing consistent behavior.
-
----
-
-## 5. Learned Distribution Scale
-
-Each feature learns a data-dependent scaling factor:
-
-\[
-s_i = \text{softplus}(u^\top \tilde{z}_i)
-\]
-
-\[
-a_i = s_i \cdot f_i
-\]
-
-This allows features with higher uncertainty or variability to be adaptively dampened.
-
----
-
-## 6. Likelihood-Consistency Discrepancy
-
-We define a normalized discrepancy score:
-
-\[
-C_i =
-\frac{|\hat{\mu}_i - \mu_i^{ref}|}
-{\sigma_i^{ref} + \epsilon}
-\]
-
-Where:
-- \( \hat{\mu}_i \) is a model-implied or observed statistic
-- \( (\mu_i^{ref}, \sigma_i^{ref}) \) are empirical baselines
-
-This score measures **deviation from expected biological behavior**, not error.
-
----
-
-## 7. Multiplicative Consistency Gating
-
-Instead of injecting discrepancy additively, ResLik applies **multiplicative gating**:
-
-\[
-z'_i = a_i \cdot \exp(-\lambda C_i)
-\]
-
-Where:
-- \( \lambda \ge 0 \) controls the strength of consistency enforcement
-
-This preserves representation geometry while softly suppressing implausible features.
-
----
-
-## 8. Outputs
-
-The unit outputs:
-- gated embeddings \( z'_i \in \mathbb{R}^d \)
-- diagnostic scores \( C_i \), gating strengths, and scaling factors
-
-No biological interpretation is imposed at this stage.
-
----
-
-## 9. Design Intent
-
-ResLik is designed to:
-- improve calibration under distribution shift,
-- stabilize embeddings across noisy modalities,
-- provide feature-level diagnostics.
-
-It is **not** intended to:
-- infer causality,
-- discover new biological mechanisms,
-- replace domain-specific models.
-
----
-
-## 10. When ResLik May Fail
-
-- Reference statistics are misestimated
-- Strong covariate shift invalidates baselines
-- Feature embeddings already collapse information
-
-These failure modes are documented explicitly to prevent misuse.
-
----
-
-## 11. Summary
-
-ResLik is a **representation-level regularization primitive** that introduces
-likelihood-awareness without enforcing a specific probabilistic model.
-
-Its strength lies in:
-- modularity,
-- interpretability,
-- and cross-modal applicability.
-
+## 3. Limitations
+- **Linear Reference:** The simple Z-score-like discrepancy cannot capture complex manifold deviations.
+- **No Causal Mechanism:** The gating purely suppresses "unlikely" values; it does not correct them or infer *why* they are unlikely.
