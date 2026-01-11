@@ -42,6 +42,13 @@ public:
     void set_lambda(float lambda);
 
     /**
+     * @brief Get the internal state diagnostics.
+     * 
+     * @return DiagnosticReport Structure containing diagnostic data.
+     */
+    diagnostics::DiagnosticReport get_diagnostics() const;
+
+    /**
      * @brief Update internal running statistics (e.g., for batch norm).
      * 
      * @param batch Batch of input vectors.

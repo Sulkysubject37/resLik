@@ -32,6 +32,9 @@ struct ResLikUnit::Impl {
     // Gating Sensitivity for Step 5
     float lambda = 1.0f;
 
+    // Diagnostics Storage
+    diagnostics::DiagnosticReport last_report;
+
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
                          W1(h * d), b1(h, 0.0f),
                          u(d, 0.0f) {
@@ -103,7 +106,17 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     std::vector<float> output = a;
     for (float& val : output) val *= gate;
 
+    // Store diagnostics
+    pImpl->last_report.mean_gate_value = gate; // Since gate is scalar per sample here (shared logic simplification)
+    pImpl->last_report.max_discrepancy = C;
+    // Collapsed features detection stub
+    pImpl->last_report.collapsed_features.clear();
+
     return output; 
+}
+
+diagnostics::DiagnosticReport ResLikUnit::get_diagnostics() const {
+    return pImpl->last_report;
 }
 
 void ResLikUnit::update_stats(const std::vector<std::vector<float>>& batch) {
