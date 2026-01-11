@@ -1,4 +1,10 @@
 """
+ResLik v1.0.0 Behavioral Benchmark
+Purpose: Evaluate discrepancy–error alignment.
+Non-goals: This is NOT a performance comparison or accuracy benchmark.
+"""
+
+"""
 Benchmark: Calibration Alignment Test.
 
 Hypothesis:

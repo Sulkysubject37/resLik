@@ -1,4 +1,10 @@
 """
+ResLik v1.0.0 Behavioral Benchmark
+Purpose: Add lambda sweep to characterize regularization strength.
+Non-goals: This is NOT a performance comparison or accuracy benchmark.
+"""
+
+"""
 Benchmark: Lambda Sensitivity Sweep.
 
 Hypothesis:

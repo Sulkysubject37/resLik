@@ -40,8 +40,22 @@ What specific result confirms the hypothesis?
 If the benchmark fails (e.g., ResLik performs worse than baseline), what does that mean?
 *Example: "If ResLik amplifies noise, the gating mechanism is unstable."*
 
-## Running Benchmarks
-Each script is standalone and prints a clear report.
-```bash
-python benchmarks/stability_shift.py
-```
+## Benchmarks included in v1.0.0
+
+The following scripts are used to characterize v1.0.0 behavior:
+- `stability_shift.py`: Noise damping characterization.
+- `calibration_eval.py`: Discrepancy-error correlation.
+- `distribution_shift.py`: OOD detection sensitivity.
+- `ablation.py`: Neutrality on clean data.
+- `diagnostic_consistency.py`: Mathematical monotonicity check.
+- `lambda_sweep.py`: Hyperparameter sensitivity map.
+
+## Reproducibility
+- All benchmarks use `np.random.seed(42)` where applicable for deterministic results.
+- Benchmarks rely on synthetic Gaussian data; results may vary on heavy-tailed real-world data.
+- C++ core uses a fixed deterministic initialization for weights.
+
+## Known Limitations
+- **Resolution:** Benchmarks are currently aggregate-focused (mean/max).
+- **Modality:** Tested primarily on unimodal Gaussian-like manifolds.
+- **Hardware:** CPU-only characterization.

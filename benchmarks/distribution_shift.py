@@ -1,4 +1,10 @@
 """
+ResLik v1.0.0 Behavioral Benchmark
+Purpose: Stress-test ResLik under distributional shift.
+Non-goals: This is NOT a performance comparison or accuracy benchmark.
+"""
+
+"""
 Benchmark: Distribution Shift Stress Test.
 
 Hypothesis:
