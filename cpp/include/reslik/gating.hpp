@@ -14,6 +14,21 @@ namespace gating {
 std::vector<float> compute_discrepancy(const std::vector<float>& normalized_input);
 
 /**
+ * @brief Numerically stable softplus: log(1 + exp(x))
+ */
+float softplus(float x);
+
+/**
+ * @brief Compute the learned scale factor for a feature.
+ * Equation: s_i = softplus(u^T * z_tilde_i)
+ * 
+ * @param z_tilde Normalized input vector.
+ * @param u Shared scale projection weights.
+ * @return float Scale factor s_i.
+ */
+float compute_learned_scale(const std::vector<float>& z_tilde, const std::vector<float>& u);
+
+/**
  * @brief Compute the multiplicative gate values.
  * 
  * @param discrepancy Discrepancy scores.

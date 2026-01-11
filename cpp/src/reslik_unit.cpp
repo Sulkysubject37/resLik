@@ -1,5 +1,6 @@
 #include "reslik/reslik_unit.hpp"
 #include "reslik/normalization.hpp"
+#include "reslik/gating.hpp"
 #include <iostream>
 #include <cmath>
 #include <numeric>
@@ -20,8 +21,12 @@ struct ResLikUnit::Impl {
     std::vector<float> W1; // (latent_dim, input_dim)
     std::vector<float> b1; // (latent_dim)
 
+    // Parameters for Step 3: s = softplus(u^T * z_tilde)
+    std::vector<float> u; // (input_dim)
+
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
-                         W1(h * d), b1(h, 0.0f) {
+                         W1(h * d), b1(h, 0.0f),
+                         u(d, 0.0f) {
         // Deterministic initialization: scaled identity or simple Xavier-like
         float scale = std::sqrt(2.0f / (d + h));
         for (int i = 0; i < h; ++i) {
@@ -29,6 +34,10 @@ struct ResLikUnit::Impl {
                 // Pseudo-random deterministic fill
                 W1[i * d + j] = (( (i * d + j) % 100) / 50.0f - 1.0f) * scale;
             }
+        }
+        // Initialize u to small values
+        for (int j = 0; j < d; ++j) {
+            u[j] = ((j % 100) / 1000.0f);
         }
     }
 
@@ -60,8 +69,15 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     // Step 2: Shared Feed-Forward Projection
     std::vector<float> f = pImpl->project(z_tilde);
 
-    // TODO: Steps 3-5 (Gating and Discrepancy) in subsequent sub-tasks
-    return f; 
+    // Step 3: Learned Scale Computation
+    float s = gating::compute_learned_scale(z_tilde, pImpl->u);
+
+    // a_i = s_i * f_i
+    std::vector<float> a = f;
+    for (float& val : a) val *= s;
+
+    // TODO: Steps 4-5 (Discrepancy and Final Gating) in subsequent sub-tasks
+    return a; 
 }
 
 void ResLikUnit::update_stats(const std::vector<std::vector<float>>& batch) {
