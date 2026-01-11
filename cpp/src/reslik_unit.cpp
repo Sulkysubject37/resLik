@@ -1,6 +1,7 @@
 #include "reslik/reslik_unit.hpp"
 #include "reslik/normalization.hpp"
 #include "reslik/gating.hpp"
+#include "reslik/diagnostics.hpp"
 #include <iostream>
 #include <cmath>
 #include <numeric>
@@ -23,6 +24,13 @@ struct ResLikUnit::Impl {
 
     // Parameters for Step 3: s = softplus(u^T * z_tilde)
     std::vector<float> u; // (input_dim)
+
+    // Reference Statistics for Step 4 (Discrepancy)
+    float mu_ref = 0.0f;
+    float sigma_ref = 1.0f;
+
+    // Gating Sensitivity for Step 5
+    float lambda = 1.0f;
 
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
                          W1(h * d), b1(h, 0.0f),
@@ -57,27 +65,45 @@ struct ResLikUnit::Impl {
 ResLikUnit::ResLikUnit(int input_dim, int latent_dim) 
     : pImpl(std::make_unique<Impl>(input_dim, latent_dim)) {}
 
+void ResLikUnit::set_reference_stats(float mu_ref, float sigma_ref) {
+    pImpl->mu_ref = mu_ref;
+    pImpl->sigma_ref = std::max(1e-8f, sigma_ref);
+}
+
+void ResLikUnit::set_lambda(float lambda) {
+    pImpl->lambda = lambda;
+}
+
 std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     if (input.size() != static_cast<size_t>(pImpl->input_dim)) {
         throw std::runtime_error("Input dimension mismatch in ResLikUnit::forward");
     }
 
-    // Step 1: Pre-Normalization
+    // Step 1: Pre-Normalization (theory.md Step 1)
     normalization::MatrixView view{input.data(), 1, static_cast<size_t>(pImpl->input_dim)};
     std::vector<float> z_tilde = normalization::standardize_per_feature(view);
 
-    // Step 2: Shared Feed-Forward Projection
+    // Step 2: Shared Feed-Forward Projection (theory.md Step 2)
     std::vector<float> f = pImpl->project(z_tilde);
 
-    // Step 3: Learned Scale Computation
+    // Step 3: Learned Scale Computation (theory.md Step 3)
     float s = gating::compute_learned_scale(z_tilde, pImpl->u);
 
     // a_i = s_i * f_i
     std::vector<float> a = f;
     for (float& val : a) val *= s;
 
-    // TODO: Steps 4-5 (Discrepancy and Final Gating) in subsequent sub-tasks
-    return a; 
+    // Step 4: Likelihood-Consistency Discrepancy (theory.md Step 4)
+    float C = diagnostics::compute_discrepancy(input, pImpl->mu_ref, pImpl->sigma_ref);
+
+    // Step 5: Multiplicative Consistency Gating (theory.md Step 5)
+    // Equation: z' = a * exp(-lambda * C)
+    float gate = std::exp(-pImpl->lambda * C);
+    
+    std::vector<float> output = a;
+    for (float& val : output) val *= gate;
+
+    return output; 
 }
 
 void ResLikUnit::update_stats(const std::vector<std::vector<float>>& batch) {

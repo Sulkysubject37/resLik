@@ -29,6 +29,19 @@ public:
     std::vector<float> forward(const std::vector<float>& input);
 
     /**
+     * @brief Set the reference statistics for discrepancy calculation.
+     * 
+     * @param mu_ref Reference mean.
+     * @param sigma_ref Reference standard deviation.
+     */
+    void set_reference_stats(float mu_ref, float sigma_ref);
+
+    /**
+     * @brief Set the gating sensitivity lambda.
+     */
+    void set_lambda(float lambda);
+
+    /**
      * @brief Update internal running statistics (e.g., for batch norm).
      * 
      * @param batch Batch of input vectors.
