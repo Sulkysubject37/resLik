@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "ResLik: Residual Likelihood-Gated Representation Unit"
+authors:
+  - family-names: "Arshad"
+    given-names: "MD"
+    affiliation: "Jamia Millia Islamia"
+version: 0.0.1
+date-released: 2026-01-12
+license: MIT
+url: "https://github.com/sulkysubject37/reslik"
+abstract: "A modality-agnostic representation unit for improving calibration and stability in biological data embeddings via likelihood-consistent gating."
+keywords:
+  - bioinformatics
+  - machine learning
+  - representation learning
+  - stability
+  - calibration

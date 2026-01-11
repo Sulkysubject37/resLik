@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+
+# C++
+*.o
+*.obj
+*.dylib
+*.dll
+cpp/build/
+
+# Editor/System
+.DS_Store
+.vscode/
+.idea/

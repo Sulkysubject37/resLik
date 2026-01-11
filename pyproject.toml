@@ -1,0 +1,26 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "reslik"
+version = "0.0.1"
+description = "Residual Likelihood-Gated Representation Unit"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "MD Arshad", email = "arshad.md@jamia.ac.in" }
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[tool.scikit-build]
+cmake.version = ">=3.15"
+ninja.version = ">=1.5"
