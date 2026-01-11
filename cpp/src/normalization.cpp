@@ -33,5 +33,36 @@ void validate_stddev(const std::vector<float>& stddev, const std::string& contex
     }
 }
 
+std::vector<float> standardize_per_feature(const MatrixView& input, float epsilon) {
+    std::vector<float> output(input.rows * input.cols);
+
+    for (size_t i = 0; i < input.rows; ++i) {
+        const float* row_ptr = input.data + (i * input.cols);
+        float* out_row_ptr = output.data() + (i * input.cols);
+
+        // 1. Compute mean over embedding dimension (theory.md Step 1)
+        double sum = 0.0;
+        for (size_t j = 0; j < input.cols; ++j) {
+            sum += row_ptr[j];
+        }
+        float mean = static_cast<float>(sum / input.cols);
+
+        // 2. Compute standard deviation (theory.md Step 1)
+        double sq_sum = 0.0;
+        for (size_t j = 0; j < input.cols; ++j) {
+            float diff = row_ptr[j] - mean;
+            sq_sum += diff * diff;
+        }
+        float stddev = std::sqrt(static_cast<float>(sq_sum / input.cols));
+
+        // 3. Normalize: \tilde{z}_i = (z_i - \mu) / (\sigma + \epsilon)
+        for (size_t j = 0; j < input.cols; ++j) {
+            out_row_ptr[j] = (row_ptr[j] - mean) / (stddev + epsilon);
+        }
+    }
+
+    return output;
+}
+
 } // namespace normalization
 } // namespace reslik
