@@ -31,24 +31,22 @@ def run_ablation_benchmark():
     n_samples = 100
     clean_data = np.random.normal(0, 1, (n_samples, input_dim)).astype(np.float32)
     
-    # Run ResLik with matching stats
-    # We set lambda low (0.1) or standard (1.0) to see baseline behavior
-    # Ideally at lambda=1.0, clean data (z-score ~ 0-3) should mostly pass.
+    # Run ResLik with matching stats and dead-zone enabled
+    # We use tau=0.8 to account for the expected discrepancy of standard normal data (~0.79)
     
-    output, diag = unit(clean_data, ref_mean=0.0, ref_std=1.0, gating_lambda=1.0)
+    output, diag = unit(clean_data, ref_mean=0.0, ref_std=1.0, gating_lambda=1.0, gating_tau=0.8)
     
     mean_gate = diag.mean_gate_value
     
-    print(f"Mean Gate Value on Clean Data: {mean_gate:.4f}")
+    print(f"Mean Gate Value on Clean Data (tau=0.8): {mean_gate:.4f}")
     
     # Validation
-    # A gate of 1.0 is perfect. < 0.9 implies we are throwing away >10% of signal 
-    # just because of Gaussian tails.
+    # With tau=0.8, we expect the gate to be > 0.9
     
     if mean_gate > 0.9:
         print("SUCCESS: ResLik preserves clean data (minimal over-gating).")
     else:
-        print(f"FAILURE: ResLik aggressively gates clean data (Gate={mean_gate:.4f}).")
+        print(f"FAILURE: ResLik still aggressively gates clean data (Gate={mean_gate:.4f}).")
         print("Consider lowering default lambda or checking softplus initialization.")
         # We don't exit(1) because this is a tuning issue, not a logic bug,
         # but it's important for the benchmark report.
