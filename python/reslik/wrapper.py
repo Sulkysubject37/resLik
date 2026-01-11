@@ -1,6 +1,5 @@
-import numpy as np
-from typing import Tuple, Dict, Any, Optional
 from . import _core
+from .diagnostics import ResLikDiagnostics, wrap_diagnostics
 
 class ResLikUnit:
     """
@@ -31,7 +30,7 @@ class ResLikUnit:
                  z_in: np.ndarray, 
                  ref_mean: float = 0.0, 
                  ref_std: float = 1.0, 
-                 gating_lambda: float = 1.0) -> Tuple[np.ndarray, Dict[str, Any]]:
+                 gating_lambda: float = 1.0) -> Tuple[np.ndarray, ResLikDiagnostics]:
         """
         Apply ResLik gating to the input embeddings.
         
@@ -45,12 +44,9 @@ class ResLikUnit:
                                    mean stricter filtering of outliers.
                                    
         Returns:
-            Tuple[np.ndarray, Dict[str, Any]]: 
-                - Gated output embeddings (same shape as input, but projected dim if fully implemented, 
-                  here currently C++ returns same dim 'a' * gate, actually it returns latent_dim sized vector from project()?)
-                  Wait, C++ logic: f (latent_dim), s (scalar), a = f * s (latent_dim). 
-                  So output is (latent_dim).
-                - Diagnostics dictionary containing discrepancy scores and gate values.
+            Tuple[np.ndarray, ResLikDiagnostics]: 
+                - Gated output embeddings (n_samples, latent_dim)
+                - Structured diagnostics object.
         """
         # Input Validation
         z_in = np.asarray(z_in, dtype=np.float32)
@@ -96,13 +92,14 @@ class ResLikUnit:
         
         if not is_batch:
             outputs = outputs[0]
-            diagnostics_agg = diagnostics_list[0]
+            diagnostics_obj = wrap_diagnostics(diagnostics_list[0])
         else:
             # Aggregate diagnostics for batch
-            diagnostics_agg = {
-                "mean_gate": np.mean([d["mean_gate"] for d in diagnostics_list]),
-                "max_discrepancy": np.max([d["max_discrepancy"] for d in diagnostics_list]),
+            agg_dict = {
+                "mean_gate": float(np.mean([d["mean_gate"] for d in diagnostics_list])),
+                "max_discrepancy": float(np.max([d["max_discrepancy"] for d in diagnostics_list])),
                 "per_sample": diagnostics_list
             }
+            diagnostics_obj = wrap_diagnostics(agg_dict)
             
-        return outputs, diagnostics_agg
+        return outputs, diagnostics_obj

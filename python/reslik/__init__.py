@@ -1,4 +1,5 @@
 from .version import __version__
-from .wrapper import ResLikWrapper
+from .wrapper import ResLikUnit
+from .diagnostics import ResLikDiagnostics
 
-__all__ = ["ResLikWrapper", "__version__"]
+__all__ = ["ResLikUnit", "ResLikDiagnostics", "__version__"]
