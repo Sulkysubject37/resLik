@@ -70,19 +70,3 @@ Given feature embeddings $z_i \in \mathbb{R}^d$, ResLik:
 5. Applies **multiplicative gating** to suppress implausible feature contributions  
 
 Full mathematical details are in [`docs/theory.md`](docs/theory.md).
-
----
-
-## Repository Structure
-
-```text
-reslik/
-├── cpp/            # C++ numerical core (no biology, no training logic)
-├── python/         # Python wrapper and user-facing API
-├── examples/       # Minimal, focused usage examples
-├── benchmarks/     # Stability, calibration, and ablation tests
-├── docs/           # Theory, design choices, and failure modes
-├── CMakeLists.txt
-├── pyproject.toml
-└── README.md
-```
