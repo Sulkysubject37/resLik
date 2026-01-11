@@ -1,9 +1,19 @@
 #!/bin/bash
 set -e
 
-echo "Building C++ core and Python bindings..."
+# Ensure we are using the local virtual environment
+VENV_DIR="./reslik"
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Virtual environment not found at $VENV_DIR. Please create it first."
+    exit 1
+fi
 
-# Use pip to install in editable mode with verbose output to see cmake logs
-pip install . -v
+PYTHON="$VENV_DIR/bin/python"
+PIP="$VENV_DIR/bin/pip"
+
+echo "Building C++ core and Python bindings using $PYTHON..."
+
+# Use the venv's pip to install in editable mode with verbose output
+$PIP install . -v
 
 echo "Build complete."
