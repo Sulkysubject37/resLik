@@ -15,9 +15,10 @@ public:
     /**
      * @brief Construct a new ResLikUnit object
      * 
-     * @param input_dim Dimension of input embeddings.
+     * @param input_dim Dimension of input embeddings (d).
+     * @param latent_dim Dimension of the projection (h).
      */
-    explicit ResLikUnit(int input_dim);
+    explicit ResLikUnit(int input_dim, int latent_dim);
 
     /**
      * @brief Apply the ResLik gating mechanism.
