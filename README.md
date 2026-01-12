@@ -6,22 +6,35 @@ ResLik is the first concrete instantiation of the **Representation-Level Control
 
 ## The RLCS Paradigm
 
-ResLik is positioned as a **Representation-Level Control Surface (RLCS)**. This paradigm describes a class of systems that sense representation reliability and emit control-relevant signals without executing decisions themselves.
+ResLik is the reference implementation of the **Representation-Level Control Surfaces (RLCS)** paradigm. This paradigm describes a class of systems that sense representation reliability and emit control-relevant signals without executing decisions themselves.
 
-- **Sensing (ResLik Core)**: Quantifies the statistical consistency of latent embeddings against a validated reference manifold.
+- **Sensing (Sensor Array)**: A composable suite of sensors (ResLik, TCS) that quantify different dimensions of representation consistency.
 - **Signaling (Control Surface)**: Transforms raw diagnostics into formal recommendations (`PROCEED`, `DOWNWEIGHT`, `DEFER`, `ABSTAIN`) via deterministic, human-interpretable interfaces.
 - **Acting (External Controller)**: Downstream systems consume these signals to route data, throttle ingestion, or engage safety fallbacks.
 
 ---
 
-## Important: Release v1.1.0-dev Scope
-- **Forward-Only**: ResLik is a forward-pass numerical transformation. It does not support autograd or internal backpropagation.
-- **Stateless & Deterministic**: Signals are derived purely from the current representation and fixed reference statistics.
-- **Non-Executive**: ResLik informs control logic but does not replace the system controller.
+## RLCS Sensors (v1.x)
+
+RLCS provides a family of modular sensors that can be mixed and matched based on system requirements:
+
+| Sensor | Type | Senses | Use Case |
+| :--- | :--- | :--- | :--- |
+| **ResLik** | Population-Level | Deviation from global training manifold | Detecting OOD inputs, novelties, and anomalies. |
+| **TCS** | Local Temporal | Deviation from immediate history | Detecting sudden shocks, glitches, and unstable trajectories. |
+
+*Note: Sensors are optional and independent. You can use ResLik alone, TCS alone, or both in parallel feeding a unified Control Surface.*
 
 ---
 
-## Why RLCS (and ResLik) Exist
+## Important: Release v1.1.0-dev Scope
+- **Forward-Only**: Sensors are forward-pass numerical transformations. No autograd support.
+- **Stateless & Deterministic**: Signals are derived purely from input state and reference statistics.
+- **Non-Executive**: Sensors inform control logic but do not replace the system controller.
+
+---
+
+## Why RLCS Exists
 
 Modern AI pipelines and robotics stacks often suffer from **silent failures** under distribution shift. Features that deviate from training assumptions can lead to overconfident predictions or catastrophic failure modes.
 
