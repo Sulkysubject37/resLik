@@ -41,9 +41,28 @@ Modern AI pipelines and robotics stacks often suffer from **silent failures** un
 ResLik addresses this by acting as an **evidentiary layer** between representation learning and execution logic, providing cheap, local reliability telemetry at the latent level.
 
 ### Cross-Disciplinary Applications
-- **Applied AI Pipelines**: Signal when a stage of a multi-model pipeline is processing out-of-distribution features, routing to fallback models or human review.
-- **Robotics Perception Stacks**: Provide per-feature confidence to sensor fusion algorithms, allowing graceful degradation when environmental conditions violate assumptions.
+- **Applied AI Pipelines**: Signal when a specific stage of a multi-model pipeline is processing out-of-distribution features, allowing the system to route to fallback models or human review.
+- **Robotics Perception Stacks**: Provide per-feature confidence to sensor fusion algorithms, enabling the stack to gracefully degrade when environmental conditions violate sensory assumptions.
 - **Data Systems**: Act as a diagnostic gate for streaming data, identifying corruption or drift before it propagates into downstream analytics.
+
+---
+
+## Documentation & Getting Started
+
+To avoid clutter, we provide a structured documentation path for new users.
+
+### 🏁 Start Here
+*   **[RLCS Adoption Guide](docs/rlcs_adoption_guide.md)**: The canonical entry point. Read this to understand if RLCS fits your system and how to integrate it.
+
+### Core Concepts
+*   **[The RLCS Paradigm](docs/paradigm_rlcs.md)**: Formal definition of the architecture (Sensing vs. Signaling vs. Acting).
+*   **[ResLik Theory](docs/theory.md)**: Mathematical specification of the Likelihood-Consistency Sensor.
+*   **[API Reference](docs/api_reference.md)**: Python interface documentation.
+
+### Domain-Specific Guides
+*   🤖 **[Robotics & Cyber-Physical Systems](docs/replication_robotics.md)**
+*   🧠 **[Applied AI & ML Pipelines](docs/replication_applied_ai.md)**
+*   📊 **[Data Systems & Streaming](docs/replication_data_systems.md)**
 
 ---
 
