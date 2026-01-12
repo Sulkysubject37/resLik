@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-01-12
+
+### Consolidated (RLCS v1.0 Paradigm)
+This release marks the formal stabilization of the **Representation-Level Control Surfaces (RLCS)** paradigm. It consolidates all experimental sensors and documentation into a unified, production-ready framework.
+
+### Added
+- **Sensor Suite:** Officially accepted **TCS** (Temporal Consistency) and **Agreement Sensor** (Cross-View) as standard RLCS components alongside ResLik.
+- **Documentation:** Added canonical **Adoption Guide**, **Sensor Composition Rules**, and domain-specific **Replication Guides** (AI, Robotics, Data Systems).
+- **Demos:** Added validated multi-sensor control scenarios demonstrating additive reliability signaling.
+
+### Changed
+- **Project Structure:** Reframed repository as the reference implementation of the RLCS paradigm, not just a single algorithm.
+- **Terminlogy:** Standardized terms (Sensing, Signaling, Acting) across all docs.
+
 ## [1.1.0-dev] - 2026-01-12
 
 ### Changed

@@ -1,63 +1,47 @@
-# ResLik — A Representation-Level Control Surface (v1.1.0-dev)
+# resLik: Representation-Level Control Surfaces (RLCS)
 
-ResLik is the first concrete instantiation of the **Representation-Level Control Surfaces (RLCS)** paradigm. It is a modality-agnostic reliability sensor that introduces **likelihood-consistency gating** at the feature level to improve the calibration and stability of data-driven systems.
+**Current Version**: v1.2.0
 
----
-
-## The RLCS Paradigm
-
-ResLik is the reference implementation of the **Representation-Level Control Surfaces (RLCS)** paradigm. This paradigm describes a class of systems that sense representation reliability and emit control-relevant signals without executing decisions themselves.
-
-- **Sensing (Sensor Array)**: A composable suite of sensors (ResLik, TCS) that quantify different dimensions of representation consistency.
-- **Signaling (Control Surface)**: Transforms raw diagnostics into formal recommendations (`PROCEED`, `DOWNWEIGHT`, `DEFER`, `ABSTAIN`) via deterministic, human-interpretable interfaces.
-- **Acting (External Controller)**: Downstream systems consume these signals to route data, throttle ingestion, or engage safety fallbacks.
+**resLik** is the reference implementation of the **Representation-Level Control Surfaces (RLCS)** paradigm. It provides a suite of lightweight, modality-agnostic sensors that monitor the reliability of latent representations in real-time, enabling safer AI and robotics systems.
 
 ---
 
-## RLCS Sensors (v1.x)
+## The Paradigm: What is RLCS?
 
-RLCS provides a family of modular sensors that can be mixed and matched based on system requirements:
+RLCS is a systems architecture that embeds **reliability sensing** directly into the latent feature spaces of data-driven applications. It separates the *measurement* of data consistency from the *policy* of execution control.
 
-| Sensor | Type | Senses | Use Case |
-| :--- | :--- | :--- | :--- |
-| **ResLik** | Population-Level | Deviation from global training manifold | Detecting OOD inputs, novelties, and anomalies. |
-| **TCS** | Local Temporal | Deviation from immediate history | Detecting sudden shocks, glitches, and unstable trajectories. |
+> **Core Principle**: Sensors observe representations and emit signals (e.g., `ABSTAIN`, `DEFER`), but they never execute decisions. Control logic remains external and deterministic.
 
-*Note: Sensors are optional and independent. You can use ResLik alone, TCS alone, or both in parallel feeding a unified Control Surface.*
-
----
-
-## Important: Release v1.1.0-dev Scope
-- **Forward-Only**: Sensors are forward-pass numerical transformations. No autograd support.
-- **Stateless & Deterministic**: Signals are derived purely from input state and reference statistics.
-- **Non-Executive**: Sensors inform control logic but do not replace the system controller.
+### The RLCS Stack
+1.  **Sensing (The Sensor Array)**: A composable suite of mathematical sensors quantifies consistency (Population, Temporal, Cross-View).
+2.  **Signaling (The Control Surface)**: A stateless logic layer maps raw diagnostics to formal, human-interpretable control signals.
+3.  **Acting (The External Controller)**: The downstream system consumes these signals to route data, throttle ingestion, or engage safety fallbacks.
 
 ---
 
-## Why RLCS Exists
+## The Sensor Suite (v1.2.0)
 
-Modern AI pipelines and robotics stacks often suffer from **silent failures** under distribution shift. Features that deviate from training assumptions can lead to overconfident predictions or catastrophic failure modes.
+This repository implements three accepted RLCS sensors:
 
-ResLik addresses this by acting as an **evidentiary layer** between representation learning and execution logic, providing cheap, local reliability telemetry at the latent level.
+| Sensor | Type | Target Failure Mode |
+| :--- | :--- | :--- |
+| **ResLik** | Population-Level | **Out-of-Distribution (OOD)**: Input deviates from the training manifold. |
+| **TCS** | Temporal Consistency | **Shock/Glitch**: Input trajectory exhibits impossible jumps or instability. |
+| **Agreement** | Cross-View | **Modal Conflict**: Independent sensors (e.g., Lidar/Cam) disagree on the state. |
 
-### Cross-Disciplinary Applications
-- **Applied AI Pipelines**: Signal when a specific stage of a multi-model pipeline is processing out-of-distribution features, allowing the system to route to fallback models or human review.
-- **Robotics Perception Stacks**: Provide per-feature confidence to sensor fusion algorithms, enabling the stack to gracefully degrade when environmental conditions violate sensory assumptions.
-- **Data Systems**: Act as a diagnostic gate for streaming data, identifying corruption or drift before it propagates into downstream analytics.
+*All sensors are $O(N)$, forward-only, and require no backpropagation.*
 
 ---
 
 ## Documentation & Getting Started
 
-To avoid clutter, we provide a structured documentation path for new users.
-
 ### 🏁 Start Here
-*   **[RLCS Adoption Guide](docs/rlcs_adoption_guide.md)**: The canonical entry point. Read this to understand if RLCS fits your system and how to integrate it.
+*   **[RLCS Adoption Guide](docs/rlcs_adoption_guide.md)**: The canonical entry point. Read this to understand if RLCS fits your system.
 
 ### Core Concepts
-*   **[The RLCS Paradigm](docs/paradigm_rlcs.md)**: Formal definition of the architecture (Sensing vs. Signaling vs. Acting).
-*   **[ResLik Theory](docs/theory.md)**: Mathematical specification of the Likelihood-Consistency Sensor.
-*   **[API Reference](docs/api_reference.md)**: Python interface documentation.
+*   **[The RLCS Paradigm](docs/paradigm_rlcs.md)**: Formal definition of the architecture.
+*   **[ResLik Theory](docs/theory.md)**: Mathematical specification of the likelihood sensor.
+*   **[Sensor Composition](docs/rlcs_sensor_composition.md)**: Rules for combining multiple sensors without fusion.
 
 ### Domain-Specific Guides
 *   🤖 **[Robotics & Cyber-Physical Systems](docs/replication_robotics.md)**
@@ -66,37 +50,11 @@ To avoid clutter, we provide a structured documentation path for new users.
 
 ---
 
-## What ResLik Is (and Is Not)
+## Installation
 
-### ✅ What ResLik **is**
-- **An RLCS-compliant sensor implementation**
-- A **representation-level regularization primitive**
-- **Modality-agnostic** (Imaging, Sequencing, Robotics, Finance)
-- Designed for **stability, calibration, and diagnostics**
+```bash
+pip install .
+```
 
-### ❌ What ResLik **is not**
-- **Not a Controller**: It does not execute actions or decisions.
-- **Not a Policy Learner**: It does not learn "behavior" or optimization goals.
-- **Not a Model Fixer**: It cannot extract signals from fundamentally broken encoders.
-- **Not Domain-Bound**: While initially validated on biological data, the core math is semantic-neutral.
-
-
----
-
-## When NOT to use ResLik
-- **During initial model training:** Since v1.0.0 is forward-only, it will break gradients. Use it only at inference or as a post-hoc filter.
-- **When absolute signal magnitude is critical:** The multiplicative gating naturally reduces signal magnitude for unusual features.
-- **Without proper reference statistics:** If your reference population does not match your expected "normal" state, ResLik will aggressively silence valid data.
-
----
-
-## Core Idea (High-Level)
-
-Given feature embeddings $z_i \in \mathbb{R}^d$, ResLik:
-1. Normalizes embeddings for numerical stability  
-2. Applies a shared feed-forward transformation  
-3. Learns a **data-dependent scale** per feature  
-4. Computes a **normalized discrepancy** from empirical reference statistics  
-5. Applies **multiplicative gating** to suppress implausible feature contributions  
-
-Full mathematical details are in [`docs/theory.md`](docs/theory.md).
+## License
+MIT
