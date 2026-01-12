@@ -122,3 +122,22 @@ class ControlSurface:
             gate_summary={"mean": reliability},
             recommended_action=action
         )
+
+def build_control_signal(reslik_output: Any, diagnostics: ResLikDiagnostics, control_surface: ControlSurface) -> ControlSignal:
+    """
+    Generate a control signal from ResLik outputs using the provided control surface.
+    
+    This helper ensures a clean separation of concerns:
+    - reslik_output (Tensor/Array): The heavy numerical payload (passed through).
+    - diagnostics (ResLikDiagnostics): The lightweight metadata used for control.
+    - control_surface (ControlSurface): The deterministic logic engine.
+    
+    Args:
+        reslik_output: The gated embedding output (ignored by logic, present for API consistency).
+        diagnostics: The diagnostics object from ResLikUnit.
+        control_surface: The configured ControlSurface instance.
+        
+    Returns:
+        ControlSignal: The computed control recommendation.
+    """
+    return control_surface.evaluate(diagnostics)
