@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0-dev] - 2026-01-12
+
+### Changed
+- **Project Framing:** Explicitly repositioned ResLik as a **Representation-Level Control Surface**.
+- **Documentation:** Added Control Surface Specification (`docs/control_surface.md`) and expanded cross-disciplinary usage guides.
+- **Scope Clarification:** Updated non-goals to prevent misuse as a standalone controller or policy learner.
+
+### Added
+- **Control Interfaces:** Added `python/reslik/control_policy.py` defining placeholder interfaces for external control logic.
+- **Cross-Domain Skeletons:** Added example stubs for Applied AI, Robotics, and Data Systems to demonstrate non-biological integration.
+
+### Note
+- **No numerical or behavioral changes from v1.0.0.** The core math, C++ engine, and forward-pass logic remain frozen.
+
 ## [1.0.0] - 2026-01-12
 
 ### Added
