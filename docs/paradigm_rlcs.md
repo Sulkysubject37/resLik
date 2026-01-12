@@ -40,8 +40,26 @@ A system qualifies as an RLCS if and only if:
 *   **It is Non-Executive**: It produces information, not actions. It cannot branch execution flow itself.
 *   **It is Inspectable**: Its signals are explicit and interpretable, not hidden internal weights.
 
-## ResLik within RLCS
+## RLCS Sensor Taxonomy
 
-**ResLik (Residual Likelihood Sensor)** is a specific *instantiation* of the sensing layer within the RLCS paradigm.
-*   **ResLik** provides the mathematics for measuring consistency.
-*   **RLCS** provides the architectural contract for how those measurements inform system behavior.
+The RLCS paradigm supports multiple distinct sensor types, each targeting a specific dimension of representation reliability.
+
+### 1. Likelihood-Consistency Sensor (e.g., ResLik)
+*   **Senses**: Statistical deviation of the current embedding from a learned population manifold.
+*   **Reference**: Static, global distribution (e.g., training set statistics).
+*   **Targets**: Out-of-Distribution (OOD) inputs, novelty, and statistical anomalies.
+*   **Does NOT**: Correct errors, identify causal factors, or judge semantic truth.
+
+### 2. Temporal Consistency Sensor (e.g., TCS)
+*   **Senses**: Coherence of representation evolution over discrete time steps.
+*   **Reference**: Immediate previous state (local history).
+*   **Targets**: Sudden drifts, shocks, discontinuities, and unstable trajectories.
+*   **Does NOT**: Smooth data, filter noise, or predict future states.
+
+## Concrete Instantiations
+
+**ResLik** and **TCS** serve as concrete instantiations of the sensing layer within the RLCS paradigm.
+*   **ResLik** provides the mathematics for population-level consistency.
+*   **TCS** provides the mathematics for local temporal coherence.
+*   **RLCS** provides the architectural contract for how these measurements inform system behavior.
+

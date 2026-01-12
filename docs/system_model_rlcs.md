@@ -13,7 +13,7 @@ The data flow in an RLCS-compliant system follows a strict unidirectional path t
 [Encoder] ---------------------> [Task Head / Downstream]
       | z (representation)               ^
       v                                  |
-[RLCS Sensor]                            |
+[RLCS Sensor Array]                      |
       | d (diagnostics)                  |
       v                                  |
 [Control Surface]                        |
@@ -29,9 +29,10 @@ The data flow in an RLCS-compliant system follows a strict unidirectional path t
 
 1.  **Encoder ($\mathcal{E}$)**: Maps input $x$ to latent state $z$.
     *   $z = \mathcal{E}(x)$
-2.  **RLCS Sensor ($\mathcal{S}$)**: Maps latent state $z$ to diagnostics $d$ based on reference parameters $\theta$.
-    *   $d = \mathcal{S}(z; \theta)$
-3.  **Control Surface ($\Pi$)**: Maps diagnostics $d$ to a control recommendation $u$.
+2.  **RLCS Sensor Array ($\mathcal{S}_{1..k}$)**: A collection of independent sensors mapping latent state $z$ to a composite diagnostic state $d$.
+    *   $d = \{ \mathcal{S}_1(z), \mathcal{S}_2(z), \dots \}$
+    *   Example: $d = \{ d_{ResLik}, d_{TCS} \}$
+3.  **Control Surface ($\Pi$)**: Maps composite diagnostics $d$ to a control recommendation $u$.
     *   $u = \Pi(d)$
 4.  **External Controller ($\mathcal{C}$)**: Maps recommendation $u$ and system context $k$ to final action $a$.
     *   $a = \mathcal{C}(u, k)$
