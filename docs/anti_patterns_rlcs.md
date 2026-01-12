@@ -26,3 +26,9 @@ The strict architectural separation of RLCS is its primary safety feature. Viola
 *   **Anti-Pattern**: Using RLCS to aggressively gate features to compensate for a fundamentally broken or under-trained encoder.
 *   **Why it Fails**: RLCS is a safety net, not a crutch. If the encoder produces garbage, RLCS will just tell you it's garbage. It cannot magically extract signal where none exists.
 *   **Correction**: Fix the encoder first. Use RLCS to monitor its limits.
+
+## 6. Temporal Smoothing (Hiding Volatility)
+*   **Anti-Pattern**: Applying a moving average or Kalman filter *inside* the RLCS sensor to make the signal "cleaner."
+*   **Why it Fails**: It destroys high-frequency information. A sudden spike might be a critical shock (e.g., collision). Smoothing hides this signal, delaying the controller's reaction.
+*   **Correction**: The Sensor emits raw volatility (e.g., TCS Drift). The Controller decides whether to smooth it or react instantly.
+

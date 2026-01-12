@@ -23,12 +23,11 @@ This document visualizes the standard data and control flow in an RLCS-compliant
 |           |       Control Surface (SIGNALING)                 |
 |           |  [Thresholds / Mapping Logic / Stateless]         |
 +-----------|-----------------------|---------------------------+
-            ^                       ^
-            | Diagnostics           |
+|           | Diagnostics           |
             | (Raw Metrics)         |
 +-----------|-----------------------|---------------------------+
-|           |         RLCS Sensor (SENSING)                     |
-|           |  [ResLik / Consistency Math / Reference Stats]    |
+|           |     RLCS Sensor Array (SENSING)                   |
+|           |  [ResLik / TCS / Composable Units]                |
 +-----------|-----------------------|---------------------------+
             ^                       ^
             | Latent Z              |
@@ -49,17 +48,10 @@ This document visualizes the standard data and control flow in an RLCS-compliant
     *   **Output**: Latent Representation ($z$).
     *   **Responsibility**: Extract semantic features. *Ignorant of reliability.*
 
-2.  **RLCS Sensor (Sensing)**
+2.  **RLCS Sensor Array (Sensing)**
     *   **Input**: Latent Representation ($z$).
-    *   **Output**: Diagnostics ($d$) + Gated Representation ($z'$).
-    *   **Responsibility**: Measure statistical consistency. *Ignorant of system goals.*
+    *   **Output**: Composite Diagnostics ($d$) + Gated Representation ($z'$).
+    *   **Responsibility**: Measure statistical consistency (Population & Temporal). *Ignorant of system goals.*
 
 3.  **Control Surface (Signaling)**
     *   **Input**: Diagnostics ($d$).
-    *   **Output**: Control Signal ($u$).
-    *   **Responsibility**: Translate math to policy recommendations. *Ignorant of execution state.*
-
-4.  **External Controller (Acting)**
-    *   **Input**: Control Signal ($u$) + System Context.
-    *   **Output**: Action / Decision.
-    *   **Responsibility**: Execute changes. *The only layer with authority.*
