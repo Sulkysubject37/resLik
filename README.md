@@ -1,81 +1,132 @@
-# resLik: Representation-Level Control Surfaces (RLCS)
+# resLik — Representation-Level Control Surfaces (RLCS)
+**Version:** v1.2.0
 
-**Version**: v1.2.0
+resLik is the **reference implementation** of the *Representation-Level Control Surfaces (RLCS)* paradigm.  
+It provides a set of lightweight, forward-only sensors that quantify the reliability of latent representations and expose this information as explicit, control-relevant signals.
 
-**resLik** is the reference implementation of the Representation-Level Control Surfaces (RLCS) paradigm. It provides a suite of modular, forward-only sensors designed to monitor the statistical consistency of latent representations in real-time, enabling deterministic control signaling in data-driven systems.
+RLCS formalizes a missing layer in modern data-driven systems: **representation-level reliability sensing**, decoupled from both learning and execution.
 
-## The RLCS Paradigm
+---
 
-RLCS is a systems architecture that embeds reliability sensing directly into the latent feature spaces of learned models. It rigorously separates the *measurement* of data consistency from the *policy* of execution control.
+## Representation-Level Control Surfaces (RLCS)
 
-The architecture enforces a unidirectional flow of information through three distinct layers:
+RLCS defines a systems architecture in which **reliability is sensed, not learned**, and **signaled, not acted upon**.
 
-1.  **Sensing (The Sensor Array)**: A composable suite of mathematical functions quantifies specific dimensions of representation consistency (e.g., population likelihood, temporal coherence).
-2.  **Signaling (The Control Surface)**: A stateless logic layer maps raw diagnostic metrics to formal, discrete control signals.
-3.  **Acting (The External Controller)**: The downstream system consumes control signals to execute decisions (e.g., routing, throttling, fail-safe engagement).
+The paradigm enforces a strict separation between:
+- **Sensing**: measuring consistency properties of representations,
+- **Signaling**: mapping measurements to interpretable control signals,
+- **Acting**: executing decisions in downstream systems.
 
-## Repository Scope
+RLCS sensors never execute decisions and never embed control logic.  
+They exist solely to expose *when* internal representations should be trusted.
 
-This repository serves as the canonical reference for RLCS. It provides:
-*   The C++ numerical core for high-performance sensing.
-*   Python bindings for integration with PyTorch/NumPy pipelines.
-*   Standardized interfaces for the Control Surface and Sensor Array.
-*   Reference implementations for three primary sensor types.
+---
+
+## RLCS Architecture
+
+An RLCS-compliant system consists of three layers:
+
+1. **Sensing (Sensor Array)**  
+   A set of independent, composable sensors that observe latent representations and quantify different failure modes.
+
+2. **Signaling (Control Surface)**  
+   A deterministic, stateless interface that maps sensor diagnostics to explicit recommendations  
+   (`PROCEED`, `DOWNWEIGHT`, `DEFER`, `ABSTAIN`).
+
+3. **Acting (External Controller)**  
+   Application-specific logic that consumes control signals and decides how the system should respond.
+
+This repository implements the sensing and signaling layers only.  
+All execution and policy decisions remain external by design.
+
+---
 
 ## RLCS Sensors (v1.2.0)
 
-The library implements three accepted RLCS sensors, each targeting a distinct failure mode.
+The current release includes three accepted RLCS sensors:
 
-| Sensor | Type | Target Failure Mode |
-| :--- | :--- | :--- |
-| **ResLik** | Population-Level | **Out-of-Distribution (OOD)**: Input deviates from the learned training manifold. |
-| **TCS** | Temporal Consistency | **Shock/Glitch**: Input trajectory exhibits physically or statistically impossible discontinuities. |
-| **Agreement** | Cross-View | **Modal Conflict**: Independent representations (e.g., Lidar/Camera) disagree on the semantic state. |
+| Sensor | Class | Failure Mode Detected |
+|------|------|-----------------------|
+| **ResLik** | Population-Level Consistency | Deviation from reference population (out-of-distribution, novelty) |
+| **TCS** | Temporal Consistency | Sudden shocks, glitches, or unstable state transitions |
+| **Agreement** | Cross-View Consistency | Disagreement between independent representations or modalities |
+
+All sensors are:
+- forward-only,
+- deterministic,
+- interpretable,
+- and linear-time in representation size.
+
+Sensors are optional and composable.  
+Any subset may be used without altering system semantics.
+
+---
 
 ## Design Invariants
 
-All components in this repository adhere to the following invariants:
+The following properties are enforced throughout the implementation:
 
-*   **Forward-Only**: Sensors are purely inference-time constructs. They do not support backpropagation or gradient flow.
-*   **Stateless Execution**: Output signals are derived strictly from the current input state and frozen reference statistics.
-*   **Non-Executive**: Sensors emit information (`ABSTAIN`, `DEFER`) but never execute system-level actions.
-*   **Independence**: Sensors operate in parallel and do not fuse representations or arbitration logic.
+- **No Learning**: Sensors do not optimize objectives or adapt parameters online.
+- **No Backpropagation**: All operations are forward-pass only.
+- **No Acting**: Sensors and control surfaces never execute decisions.
+- **Deterministic Behavior**: Identical inputs produce identical signals.
+- **Composable by Construction**: Sensors operate independently without fusion or arbitration.
 
-## Usage Guidelines
+Violating these invariants breaks RLCS compliance.
 
-**Appropriate Use Cases**
-*   Runtime monitoring of latent embeddings in open-world environments.
-*   Sensor fusion stacks requiring redundancy validation before integration.
-*   High-throughput data ingestion pipelines requiring semantic quality gating.
-*   Systems requiring deterministic failure signals from non-deterministic models.
+---
 
-**Inappropriate Use Cases**
-*   Attempting to "repair" or "denoise" embeddings (RLCS is a sensor, not a filter).
-*   End-to-end training where reliability is part of the loss function.
-*   Scenarios requiring representation fusion or modification.
+## Scope and Intended Use
 
-## Documentation
+### Appropriate Use Cases
+- Monitoring representation reliability in applied AI pipelines
+- Detecting shocks, drift, or conflicts in robotics perception stacks
+- Diagnosing data quality issues in streaming or ingestion systems
+- Introducing explicit abstention or deferral logic without retraining models
 
-**Primary Documentation**
-*   **[RLCS Adoption Guide](docs/rlcs_adoption_guide.md)**: Canonical entry point for system integration.
-*   **[Paradigm Definition](docs/paradigm_rlcs.md)**: Formal architectural specification.
-*   **[Sensor Composition](docs/rlcs_sensor_composition.md)**: Rules for combining multiple sensors.
+### When *Not* to Use resLik
+- During gradient-based training (v1.x is forward-only)
+- As a substitute for a controller or policy
+- When reference statistics are unavailable or ill-defined
+- To repair fundamentally incorrect or unstable encoders
 
-**Reference Material**
-*   **[ResLik Theory](docs/theory.md)**: Mathematical specification of the Likelihood-Consistency Sensor.
-*   **[API Reference](docs/api_reference.md)**: Python interface details.
+RLCS exposes uncertainty; it does not resolve it.
 
-**Replication Guides**
-*   **[Robotics & Cyber-Physical Systems](docs/replication_robotics.md)**
-*   **[Applied AI & ML Pipelines](docs/replication_applied_ai.md)**
-*   **[Data Systems & Streaming](docs/replication_data_systems.md)**
+---
+
+## Documentation Map
+
+This repository is documentation-driven. Key entry points include:
+
+- **RLCS Adoption Guide** — when and how to use the paradigm  
+- **Paradigm Definition** — formal description of RLCS  
+- **Sensor Theory** — mathematical specification of ResLik and companion sensors  
+- **Sensor Composition Rules** — how multiple sensors coexist without fusion  
+- **Replication Guides** — applied AI, robotics, and data systems  
+- **Multi-Sensor Reports** — behavioral validation across domains  
+
+All documentation is located under `docs/`.
+
+---
+
+## Repository Scope
+
+This repository provides a **reference implementation** of RLCS for inspection, replication, and controlled integration.
+
+It is intended for:
+- system designers evaluating RLCS-style architectures,
+- researchers studying representation reliability,
+- engineers integrating diagnostic control signals into existing systems.
+
+It is not intended to function as a drop-in safety layer or a turnkey production component.
+
+---
 
 ## Installation
 
+The implementation is provided primarily for reference and experimentation.
+
+For local use:
 ```bash
 pip install .
 ```
-
-## License
-
-MIT
