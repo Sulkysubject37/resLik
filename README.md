@@ -1,71 +1,53 @@
-# ResLik — Residual Likelihood–Gated Representation Unit (v1.0.0)
+# ResLik — A Representation-Level Control Surface (v1.1.0-dev)
 
-ResLik is a **modality-agnostic representation block** for biological data that introduces
-**likelihood-consistency gating** at the feature level.  
-It is designed to improve **calibration, stability, and interpretability** of learned embeddings
-across noisy and heterogeneous omics data.
+ResLik is the first concrete instantiation of the **Representation-Level Control Surfaces (RLCS)** paradigm. It is a modality-agnostic reliability sensor that introduces **likelihood-consistency gating** at the feature level to improve the calibration and stability of data-driven systems.
 
 ---
 
-## Important: Release v1.0.0 Scope
-ResLik v1.0.0 is a **forward-only numerical transformation**.  
-- It is **not end-to-end trainable** in this version (parameters are initialized and can be tuned, but no autograd support is provided).
-- It is **not a full model**; it is a **drop-in unit** that can be attached to *any* encoder output.
+## The RLCS Paradigm
+
+ResLik is positioned as a **Representation-Level Control Surface (RLCS)**. This paradigm describes a class of systems that sense representation reliability and emit control-relevant signals without executing decisions themselves.
+
+- **Sensing (ResLik Core)**: Quantifies the statistical consistency of latent embeddings against a validated reference manifold.
+- **Signaling (Control Surface)**: Transforms raw diagnostics into formal recommendations (`PROCEED`, `DOWNWEIGHT`, `DEFER`, `ABSTAIN`) via deterministic, human-interpretable interfaces.
+- **Acting (External Controller)**: Downstream systems consume these signals to route data, throttle ingestion, or engage safety fallbacks.
 
 ---
 
-## Why ResLik Exists
-
-Modern bioinformatics pipelines (deep or shallow) often suffer from:
-- Overconfident predictions under distribution shift  
-- Feature-level noise dominating learned representations  
-- Lack of diagnostics explaining *which* features behave unexpectedly  
-
-ResLik addresses these issues by introducing a **residual, likelihood-aware gating mechanism**
-that softly penalizes feature embeddings that deviate from empirical expectations.
+## Important: Release v1.1.0-dev Scope
+- **Forward-Only**: ResLik is a forward-pass numerical transformation. It does not support autograd or internal backpropagation.
+- **Stateless & Deterministic**: Signals are derived purely from the current representation and fixed reference statistics.
+- **Non-Executive**: ResLik informs control logic but does not replace the system controller.
 
 ---
 
-## ResLik as a Representation-Level Control Surface
+## Why RLCS (and ResLik) Exist
 
-ResLik is positioned as a **control-surface primitive** for data-driven systems. It functions as an evidentiary layer that sits between representation learning and execution logic.
+Modern AI pipelines and robotics stacks often suffer from **silent failures** under distribution shift. Features that deviate from training assumptions can lead to overconfident predictions or catastrophic failure modes.
 
-- **ResLik does not decide outcomes**: It produces reliability signals (gates and discrepancies) that describe the state of a representation. It does not prescribe specific actions.
-- **ResLik does not replace controllers**: It informs downstream logic (policies, schedulers, or safety layers) which retain full authority over system behavior.
-- **Cheap, local reliability signals**: By operating directly on embeddings with minimal overhead, ResLik provides high-frequency telemetry on data consistency without requiring global context or heavy computation.
+ResLik addresses this by acting as an **evidentiary layer** between representation learning and execution logic, providing cheap, local reliability telemetry at the latent level.
 
 ### Cross-Disciplinary Applications
-- **Applied AI Pipelines**: Signal when a specific stage of a multi-model pipeline is processing out-of-distribution features, allowing the system to route to fallback models or human review.
-- **Robotics Perception Stacks**: Provide per-feature confidence metrics to sensor fusion algorithms, enabling the stack to gracefully degrade when environmental conditions violate sensory assumptions.
-- **Data Processing Workflows**: Act as a diagnostic gate for streaming data, identifying data corruption or drift at the feature level before it propagates into downstream analytics.
-- **Scientific Computing**: Monitor numerical stability and consistency of latent variables in physical simulations, informing step-size adaptation or convergence checks.
-
----
-
-## Behavioral Summary (v1.0.0)
-Based on falsification-driven benchmarks:
-- **Stability under noise ✅**: Effectively dampens representation variance under high feature-level noise.
-- **Calibration alignment ✅**: Discrepancy scores correlate strongly with prediction error in synthetic tasks.
-- **Distribution shift detection ✅**: Robustly identifies and gates OOD samples via discrepancy inflation.
-- **Over-regularization risk ⚠️**: Clean data may be gated slightly (~15%) under default settings. This is mitigated via the `gating_tau` (dead-zone) parameter.
+- **Applied AI Pipelines**: Signal when a stage of a multi-model pipeline is processing out-of-distribution features, routing to fallback models or human review.
+- **Robotics Perception Stacks**: Provide per-feature confidence to sensor fusion algorithms, allowing graceful degradation when environmental conditions violate assumptions.
+- **Data Systems**: Act as a diagnostic gate for streaming data, identifying corruption or drift before it propagates into downstream analytics.
 
 ---
 
 ## What ResLik Is (and Is Not)
 
 ### ✅ What ResLik **is**
+- **An RLCS-compliant sensor implementation**
 - A **representation-level regularization primitive**
-- **Modality-agnostic** (RNA-seq, methylation, proteomics, etc.)
-- **Likelihood-aware but likelihood-independent**
+- **Modality-agnostic** (Imaging, Sequencing, Robotics, Finance)
 - Designed for **stability, calibration, and diagnostics**
-- Implemented with a **C++ numerical core** and **Python interface**
 
 ### ❌ What ResLik **is not**
-- Not a full multi-omics framework  
-- Not a disease predictor  
-- Not causal  
-- Not a pathway discovery method  
-- Not a biological mechanism inference tool  
+- **Not a Controller**: It does not execute actions or decisions.
+- **Not a Policy Learner**: It does not learn "behavior" or optimization goals.
+- **Not a Model Fixer**: It cannot extract signals from fundamentally broken encoders.
+- **Not Domain-Bound**: While initially validated on biological data, the core math is semantic-neutral.
+
 
 ---
 
