@@ -23,10 +23,10 @@ def run_robotics_fusion():
     z_cam_t0   = np.array([1.0, 1.0])
     
     # t=1 (Rain)
-    z_lidar_t1 = np.array([0.1, 0.9]) # Shifted
-    z_cam_t1   = np.array([1.0, 1.0]) # Stable
+    z_lidar_t1 = np.array([0.0, 1.0]) # Drifts to orthogonal
+    z_cam_t1   = np.array([1.0, 0.0]) # Stays in original direction (roughly)
     
-    print("\nEvent: Heavy Rain starts...")
+    print("\nEvent: Heavy Rain starts (Sensor Disagreement)...")
     
     # Update TCS
     tcs_lidar.update(z_lidar_t0)
@@ -38,9 +38,9 @@ def run_robotics_fusion():
     # Mock ResLik (Lidar looks OOD)
     reslik_score = 0.4 
     
-    print(f"[ResLik] Lidar Reliability: {reslik_score:.2f} (Low)")
-    print(f"[TCS]    Lidar Stability:   {metrics_tcs['temporal_consistency']:.2f} (Modest Drift)")
-    print(f"[Agree]  Lidar vs Camera:   {metrics_agree['agreement_consistency']:.2f} (Conflict)")
+    print(f"[ResLik] Lidar Reliability: {reslik_score:.2f} (FAIL)")
+    print(f"[TCS]    Lidar Stability:   {metrics_tcs['temporal_consistency']:.2f} (STABLE)")
+    print(f"[Agree]  Lidar vs Camera:   {metrics_agree['agreement_consistency']:.2f} (CONFLICT)")
     
     # 3. Control Decision
     # If ResLik is low AND Agreement is low, we trust the OTHER sensor (Camera).

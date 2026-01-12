@@ -37,33 +37,32 @@ def run_multi_sensor_pipeline():
     z_t0_backup  = np.array([0.9, 0.1, 0.0, 0.0]) # Good agreement
     
     # Time t=1: Sudden Shock (TCS Fail), but looks valid (ResLik OK), Backup disagrees (Agreement Fail)
-    z_t1_primary = np.array([5.0, 0.0, 0.0, 0.0]) # Big jump
-    z_t1_backup  = np.array([1.0, 0.1, 0.0, 0.0]) # Backup didn't jump
+    z_t1_primary = np.array([5.0, 0.0, 0.0, 0.0]) # Big magnitude jump
+    z_t1_backup  = np.array([0.0, 1.0, 0.0, 0.0]) # Orthogonal to primary (Agreement = 0)
     
     # Run Step t=1
-    print("\nProcessing Step t=1 (Simulated Shock)...")
+    print("\nProcessing Step t=1 (Simulated Shock & Disagreement)...")
     
     # A. ResLik Check (Mocked behavior)
-    # Primary looks valid (just different), so ResLik might pass it.
     diag_reslik = ResLikDiagnostics(mean_gate_value=0.9, max_discrepancy=1.0)
-    print(f"[ResLik]   Reliability: {diag_reslik.mean_gate_value:.2f} (OK)")
+    print(f"[ResLik]    Reliability: {diag_reslik.mean_gate_value:.2f} (PASS)")
     
     # B. TCS Check
     tcs.update(z_t0_primary) # Prime history
     diag_tcs = tcs.update(z_t1_primary)
-    print(f"[TCS]      Consistency: {diag_tcs['temporal_consistency']:.2f} (FAIL - Shock detected)")
+    tcs_status = "FAIL" if diag_tcs['temporal_consistency'] < 0.5 else "PASS"
+    print(f"[TCS]       Consistency: {diag_tcs['temporal_consistency']:.2f} ({tcs_status})")
     
     # C. Agreement Check
     diag_agree = agreement.evaluate(z_t1_primary, z_t1_backup)
-    print(f"[Agreement] Consistency: {diag_agree['agreement_consistency']:.2f} (FAIL - Backup disagrees)")
+    agree_status = "FAIL" if diag_agree['agreement_consistency'] < 0.6 else "PASS"
+    print(f"[Agreement] Consistency: {diag_agree['agreement_consistency']:.2f} ({agree_status})")
     
     # 4. Combined Control Logic (The "Conservative OR")
-    # Rule: If any sensor < 0.5 -> DEFER/ABSTAIN
-    
     actions = []
-    if diag_reslik.mean_gate_value < 0.5: actions.append("ResLik_Fail")
-    if diag_tcs['temporal_consistency'] < 0.5: actions.append("TCS_Fail")
-    if diag_agree['agreement_consistency'] < 0.5: actions.append("Agree_Fail")
+    if diag_reslik.mean_gate_value < 0.5: actions.append("ResLik_OOD")
+    if diag_tcs['temporal_consistency'] < 0.5: actions.append("TCS_Unstable")
+    if diag_agree['agreement_consistency'] < 0.6: actions.append("Agree_Conflict")
     
     final_action = ControlAction.PROCEED
     if actions:

@@ -10,14 +10,14 @@ def run_data_flow():
     print("--- Multi-Sensor Data Ingestion Demo ---")
     
     # 1. Sensors
-    tcs = TemporalConsistencySensor(alpha=5.0) # High sensitivity
+    tcs = TemporalConsistencySensor(alpha=2.0) # Normal sensitivity
     
     # 2. Scenario: "Concept Drift" (Slow, Valid Change)
     # ResLik will flag it as OOD. TCS will say it's stable.
     # This combination implies "Valid Novelty", not "Error".
     
     z_t0 = np.array([1.0, 0.0])
-    z_t1 = np.array([1.05, 0.05]) # Small step away
+    z_t1 = np.array([1.02, 0.02]) # Very small step away
     
     tcs.update(z_t0)
     metrics_tcs = tcs.update(z_t1)
@@ -27,7 +27,7 @@ def run_data_flow():
     
     print("\nEvent: New Market Trend (Valid Drift)...")
     print(f"[ResLik] Population Fit: {reslik_score:.2f} (OOD - Novelty)")
-    print(f"[TCS]    Evolution:      {metrics_tcs['temporal_consistency']:.2f} (Stable - Consistent)")
+    print(f"[TCS]    Evolution:      {metrics_tcs['temporal_consistency']:.2f} (STABLE)")
     
     # 3. Control Decision
     # ResLik Low + TCS High = "New Normal" -> ADAPT / LOG
