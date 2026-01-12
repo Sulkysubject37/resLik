@@ -22,7 +22,23 @@ Modern bioinformatics pipelines (deep or shallow) often suffer from:
 - Lack of diagnostics explaining *which* features behave unexpectedly  
 
 ResLik addresses these issues by introducing a **residual, likelihood-aware gating mechanism**
-that softly penalizes feature embeddings that deviate from empirical biological expectations.
+that softly penalizes feature embeddings that deviate from empirical expectations.
+
+---
+
+## ResLik as a Representation-Level Control Surface
+
+ResLik is positioned as a **control-surface primitive** for data-driven systems. It functions as an evidentiary layer that sits between representation learning and execution logic.
+
+- **ResLik does not decide outcomes**: It produces reliability signals (gates and discrepancies) that describe the state of a representation. It does not prescribe specific actions.
+- **ResLik does not replace controllers**: It informs downstream logic (policies, schedulers, or safety layers) which retain full authority over system behavior.
+- **Cheap, local reliability signals**: By operating directly on embeddings with minimal overhead, ResLik provides high-frequency telemetry on data consistency without requiring global context or heavy computation.
+
+### Cross-Disciplinary Applications
+- **Applied AI Pipelines**: Signal when a specific stage of a multi-model pipeline is processing out-of-distribution features, allowing the system to route to fallback models or human review.
+- **Robotics Perception Stacks**: Provide per-feature confidence metrics to sensor fusion algorithms, enabling the stack to gracefully degrade when environmental conditions violate sensory assumptions.
+- **Data Processing Workflows**: Act as a diagnostic gate for streaming data, identifying data corruption or drift at the feature level before it propagates into downstream analytics.
+- **Scientific Computing**: Monitor numerical stability and consistency of latent variables in physical simulations, informing step-size adaptation or convergence checks.
 
 ---
 
