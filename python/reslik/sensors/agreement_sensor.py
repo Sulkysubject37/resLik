@@ -1,3 +1,20 @@
+"""
+RLCS Agreement Sensor Module.
+
+This module implements the Agreement Sensor, an RLCS-compliant component for measuring
+the semantic alignment between two independent representations of the same input.
+
+Expected Usage:
+    - Compare embeddings from two different sensor modalities (e.g., Lidar vs. Camera).
+    - Compare embeddings from two different augmentations of the same input (Contrastive).
+    - Compare embeddings from a student and teacher model.
+
+Common Misuse:
+    - Do NOT use this sensor to "fuse" or "average" the two representations.
+    - Do NOT use this sensor to decide "which one is right" (Arbitration).
+    - It provides a scalar agreement score, not a merged vector.
+"""
+
 import numpy as np
 from typing import Dict, Union, List
 
