@@ -23,3 +23,7 @@ ResLik does not learn "how to behave." It has no concept of rewards, goals, or o
 ## 7. Not Task-Specific or Domain-Bound
 ResLik is a primitive for representation-level health. While initially validated on biological data, its mathematical core is agnostic to the semantic meaning of the features. It is equally applicable to robotics, audio processing, or finance, provided a valid reference distribution is available.
 
+## 8. Not an "Actor"
+ResLik informs control, but it never executes it. The `ControlAction` recommendations are advisory signals. The transition from "signaling" to "acting" must always be mediated by an external system that holds the authority and context for decision-making. ResLik has no mechanism to modify external system state or execution flow directly.
+
+

@@ -36,10 +36,20 @@ Systems should consume ResLik signals using explicit, non-learned rules:
 3. **Execution Masking**: Use the `gate_value` to mask specific representation subspaces that are currently untrustworthy.
 4. **Degraded Performance Modes**: Trigger "Safe Mode" in controllers when the representation-level health signals indicate sustained instability.
 
-## 4. Computational Guarantees
+## 5. Control vs. Controller
 
-As a control surface, ResLik must be predictable and lightweight:
-- **Complexity**: O(N) where N is the feature dimension.
-- **Memory**: Constant overhead per unit (proportional to latent dimension).
-- **Latency**: Deterministic forward pass with no branching or iterative optimization.
-- **Training**: Zero training cost in production (no backpropagation).
+A critical distinction in the ResLik architecture is the separation between providing a **signal** and executing an **action**.
+
+### The Three-Layer Architecture
+
+1.  **Sensing (ResLik Core)**: The C++ numerical unit performs high-speed feature consistency checks. It produces raw diagnostics (gates, discrepancies). It has no concept of what the data represents or what the system is trying to achieve.
+2.  **Signaling (Control Surface)**: The Python layer (defined in `reslik.control_surface`) transforms raw diagnostics into formal recommendations (`ControlAction`). It provides a standardized language for downstream systems but does not trigger execution changes.
+3.  **Acting (External Controller)**: The parent system (e.g., a robotics stack, a data pipeline, or an AI orchestrator) consumes the `ControlSignal`. It combines this signal with global state (battery levels, safety constraints, business logic) to execute a final decision.
+
+### Why ResLik Does Not Act
+
+ResLik is designed to be **stateless and context-free**. It does not act because:
+- **Lack of Authority**: A low-level representation unit should not have the power to shut down a system or override a safety pilot.
+- **Lack of Context**: ResLik does not know if a high discrepancy is a critical error or a desired discovery.
+- **Independence**: Keeping ResLik separate from the controller allows the same numerical core to be used across vastly different domains (from bio-reactors to autonomous vehicles) by simply changing the external control policy.
+
