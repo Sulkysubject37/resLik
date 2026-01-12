@@ -1,27 +1,49 @@
-"""
-Example: Data Systems Adaptive Flow
-This script demonstrates how ResLik can be used as a control surface for
-adaptive data ingestion and quality monitoring.
+import sys
+from unittest.mock import MagicMock
+# Mock the C++ core extension to bypass linking errors during demonstration
+sys.modules['reslik._core'] = MagicMock()
 
-NOTE: This is a placeholder skeleton. ResLik informs the control flow, 
-it does not implement the controller.
-"""
+import numpy as np
+from reslik.control_surface import ControlSurface, build_control_signal, ControlAction
+from reslik.diagnostics import ResLikDiagnostics
 
-def process_stream(batch):
-    # 1. Profile incoming data batch
-    # z_batch = feature_extractor(batch)
+def process_stream():
+    print("--- Data Systems Adaptive Flow Demo ---")
     
-    # 2. ResLik provides high-frequency telemetry on batch health
-    # _, diagnostics = reslik_health_check(z_batch)
+    # 1. Initialize Control Surface for Data Quality
+    cs = ControlSurface(
+        reliability_high=0.95, 
+        reliability_low=0.85, 
+        max_discrepancy_threshold=2.0
+    )
     
-    # 3. EXTERNAL CONTROL LOGIC (The "Flow Controller")
-    # if diagnostics.mean_gate_value < 0.95:
-    #     # Data drift or quality drop detected
-    #     # Log to monitoring system and throttle ingestion rate
-    #     alert_monitoring_system(diagnostics)
-    #     reduce_ingestion_rate()
-    
-    print("Data Systems Skeleton: ResLik signals used for adaptive throttling.")
+    # 2. Simulate Batches
+    batches = [
+        {"name": "BATCH_001 (Stable)", "diag": ResLikDiagnostics(0.97, 0.4)},
+        {"name": "BATCH_002 (Drift Detected)", "diag": ResLikDiagnostics(0.88, 1.2)},
+        {"name": "BATCH_003 (Corrupted)", "diag": ResLikDiagnostics(0.60, 5.5)}
+    ]
+
+    for batch in batches:
+        print(f"\nProcessing {batch['name']}...")
+        diag = batch['diag']
+        
+        # 3. Generate Control Signal
+        signal = build_control_signal(None, diag, cs)
+        
+        # 4. Print Results
+        print(f"  Reliability: {signal.reliability_score:.4f}")
+        print(f"  SIGNAL:      {signal.recommended_action.name}")
+        
+        # 5. Controller Logic
+        if signal.recommended_action == ControlAction.PROCEED:
+            print("  >> Controller: Committing batch to database.")
+        elif signal.recommended_action == ControlAction.DOWNWEIGHT:
+            print("  >> Controller: Flagging batch for verification; committed with low-priority tag.")
+        elif signal.recommended_action == ControlAction.DEFER:
+            print("  >> Controller: Diverting batch to human validation queue.")
+        elif signal.recommended_action == ControlAction.ABSTAIN:
+            print("  >> Controller: DROPPING BATCH (CRITICAL QUALITY ALERT).")
 
 if __name__ == "__main__":
-    process_stream(None)
+    process_stream()
