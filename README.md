@@ -98,12 +98,12 @@ RLCS exposes uncertainty; it does not resolve it.
 
 This repository is documentation-driven. Key entry points include:
 
-- **RLCS Adoption Guide** — when and how to use the paradigm  
-- **Paradigm Definition** — formal description of RLCS  
-- **Sensor Theory** — mathematical specification of ResLik and companion sensors  
-- **Sensor Composition Rules** — how multiple sensors coexist without fusion  
-- **Replication Guides** — applied AI, robotics, and data systems  
-- **Multi-Sensor Reports** — behavioral validation across domains  
+- **[RLCS Adoption Guide](docs/rlcs_adoption_guide.md)** — when and how to use the paradigm
+- **[Paradigm Definition](docs/paradigm_rlcs.md)** — formal description of RLCS
+- **[Sensor Theory](docs/theory.md)** — mathematical specification of ResLik and companion sensors
+- **[Sensor Composition Rules](docs/rlcs_sensor_composition.md)** — how multiple sensors coexist without fusion
+- **Replication Guides** — [Applied AI](docs/replication_applied_ai.md), [Robotics](docs/replication_robotics.md), and [Data Systems](docs/replication_data_systems.md)
+- **[Multi-Sensor Reports](docs/phase11_multisensor_report.md)** — behavioral validation across domains
 
 All documentation is located under `docs/`.
 
