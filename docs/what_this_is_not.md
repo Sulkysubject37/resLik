@@ -13,3 +13,13 @@ ResLik is a **unit**, not a framework. It does not handle data alignment, batch 
 
 ## 4. Not a Generative Model
 ResLik is a discriminative representation refinement tool. It cannot generate new "healthy" samples from scratch.
+
+## 5. Not a Controller or Decision Engine
+ResLik is a **control surface**, not a controller. It emits signals that describe the state of a representation, but it does not execute decisions (e.g., "stop," "abort," "reroute"). Any logic that acts upon ResLik signals must reside in external, system-level controllers.
+
+## 6. Not a Policy Learner
+ResLik does not learn "how to behave." It has no concept of rewards, goals, or objectives. It simply reports on the statistical consistency of the data it sees. It does not replace reinforcement learning or classical control policies.
+
+## 7. Not Task-Specific or Domain-Bound
+ResLik is a primitive for representation-level health. While initially validated on biological data, its mathematical core is agnostic to the semantic meaning of the features. It is equally applicable to robotics, audio processing, or finance, provided a valid reference distribution is available.
+
