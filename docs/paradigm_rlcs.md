@@ -56,10 +56,18 @@ The RLCS paradigm supports multiple distinct sensor types, each targeting a spec
 *   **Targets**: Sudden drifts, shocks, discontinuities, and unstable trajectories.
 *   **Does NOT**: Smooth data, filter noise, or predict future states.
 
+### 3. Agreement Sensor (e.g., Cross-View)
+*   **Senses**: Semantic alignment between two independent representations of the same input.
+*   **Reference**: Peer representation ($z_2$).
+*   **Targets**: Sensor conflict, modal disagreement, and redundancy failures.
+*   **Does NOT**: Fuse representations, arbitrate truth, or prefer one view over another.
+
 ## Concrete Instantiations
 
-**ResLik** and **TCS** serve as concrete instantiations of the sensing layer within the RLCS paradigm.
+**ResLik**, **TCS**, and the **Agreement Sensor** serve as concrete instantiations of the sensing layer within the RLCS paradigm.
 *   **ResLik** provides the mathematics for population-level consistency.
 *   **TCS** provides the mathematics for local temporal coherence.
+*   **Agreement Sensor** provides the mathematics for cross-view redundancy.
 *   **RLCS** provides the architectural contract for how these measurements inform system behavior.
+
 
