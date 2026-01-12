@@ -1,8 +1,12 @@
-# Theory: The Minimal Res-Lik Unit (MRLU)
+# Theory: The ResLik Sensor Instantiation
 
-## 1. Formal Definition
+## 1. RLCS Sensor Definition
 
-The **ResLik Unit** transforms an input embedding $z \in \mathbb{R}^d$ into a gated representation $z' \in \mathbb{R}^h$ (where $h$ is the latent dimension) by modulating features based on their likelihood under an empirical reference distribution.
+In the context of the Representation-Level Control Surfaces (RLCS) paradigm, **ResLik** implements the **Sensor** layer ($\mathcal{S}$). Its role is to map a latent embedding $z$ to a set of diagnostic metrics and a reliability-weighted representation.
+
+### The Sensing Function $\mathcal{S}(z)$
+
+The sensor transforms an input embedding $z \in \mathbb{R}^d$ into a gated representation $z' \in \mathbb{R}^h$ and diagnostic state $d$ by modulating features based on their consistency with an empirical reference distribution.
 
 The transformation follows five steps:
 
@@ -20,7 +24,7 @@ $$s = \text{softplus}(u^\top \tilde{z})$$
 $$a = s \cdot f$$
 
 ### Step 4: Likelihood-Consistency Discrepancy
-We define a "discrepancy score" $C$ that measures how far the current embedding deviates from expected biological priors (modeled via reference statistics $\mu_{ref}, \sigma_{ref}$):
+We define a "discrepancy score" $C$ that measures how far the current embedding deviates from expected priors (modeled via reference statistics $\mu_{ref}, \sigma_{ref}$):
 $$C = \frac{|\text{mean}(z) - \mu_{ref}|}{\sigma_{ref} + \epsilon}$$
 
 ### Step 5: Multiplicative Gating (with Dead-Zone)
@@ -29,11 +33,21 @@ $$C_{eff} = \max(0, C - \tau)$$
 $$g = \exp(-\lambda \cdot C_{eff})$$
 $$z' = a \cdot g$$
 
-## 2. Assumptions
-1.  **Reference Statistics exist:** We assume access to a "healthy" or "baseline" distribution to compute $\mu_{ref}$ and $\sigma_{ref}$.
-2.  **Unimodality:** The simple discrepancy metric assumes the reference distribution is roughly unimodal.
+## 2. From Sensor to Surface
 
-## 3. Limitations
-- **Forward-Only (v1.0.0):** This version does not support backpropagation through the unit.
+The ResLik sensor outputs two signals required by the RLCS Control Surface:
+1.  **Diagnostic State ($d$)**: Derived from $g$ (gate value) and $C$ (discrepancy).
+    *   `reliability_score` $\approx \text{mean}(g)$
+    *   `max_discrepancy` $= C$
+2.  **Gated Representation ($z'$)**: The "safe" payload passed downstream only if the Control Surface recommends `PROCEED`.
+
+## 3. Assumptions
+1.  **Reference Statistics exist:** We assume access to a baseline distribution to compute $\mu_{ref}$ and $\sigma_{ref}$.
+2.  **Unimodality:** The simple discrepancy metric assumes the reference distribution is roughly unimodal.
+3.  **Statelessness:** The sensing function $\mathcal{S}(z)$ depends only on the current input $z$ and frozen parameters.
+
+## 4. Limitations
+- **Forward-Only:** This sensor does not support backpropagation through the unit during operation.
 - **Linear Reference:** The discrepancy cannot capture complex manifold deviations.
 - **No Causal Mechanism:** The gating purely suppresses "unlikely" values; it does not correct them.
+
