@@ -59,7 +59,7 @@ We demonstrate RLCS behavior across applied AI pipelines, robotics perception sy
 ### 1.5 Paper Organization 
 The remainder of this paper is structured as follows. Section 2 formalizes the notion of reliability and outlines system-level design requirements. Section 3 introduces the RLCS architecture and compliance criteria. Section 4 presents the RLCS sensor taxonomy, followed by mathematical formulations in Section 5. Section 6 describes the control surface design, and Section 7 details sensor composition rules. Section 8 demonstrates RLCS behavior across multiple system domains. Limitations and failure modes are discussed in Section 9, followed by related work in Section 10. We conclude with broader implications and future directions in Sections 11 and 12.
 
-Figure 1 (Placeholder): Schematic overview of the RLCS architecture, illustrating the separation between representation learning (encoder), reliability sensing (sensor array), control signaling (control surface), and external execution (controller). 
+![Figure 1 (Placeholder): Schematic overview of the RLCS architecture, illustrating the separation between representation learning (encoder), reliability sensing (sensor array), control signaling (control surface), and external execution (controller).](figures/fig1_architecture.png)
 
 ---
 
@@ -133,18 +133,13 @@ with the following functional composition:
 x \xrightarrow{\mathcal{E}} z \xrightarrow{\mathcal{S}} d \xrightarrow{\Pi} u \xrightarrow{\mathcal{C}} a
 
 where:
-	•	x \in \mathcal{X} is the raw input (e.g., sensor data, tokens, features),
-	•	\mathcal{E}: \mathcal{X} \rightarrow \mathbb{R}^d is the encoder, producing a latent representation z,
-	•	\mathcal{S}: \mathbb{R}^d \rightarrow \mathbb{R}^k is the sensor array, emitting diagnostic measurements d,
-	•	\Pi: \mathbb{R}^k \rightarrow \mathcal{U} is the control surface, mapping diagnostics to a discrete control signal u,
-	•	\mathcal{C}: \mathcal{U} \times \mathcal{K} \rightarrow \mathcal{A} is the external controller, which executes an action a given control context \mathcal{K}.
+1.  **The Encoder ($\mathcal{E}: \mathcal{X} \to \mathbb{R}^d$)**: Maps raw input $x$ to a latent representation $z$. The encoder is treated as a "state estimator" that is frozen or updated independently.
+2.  **The Sensor Array ($\mathcal{S}: \mathbb{R}^d \to \mathbb{R}^k$)**: A set of independent functions that measure the consistency of $z$ against various reference frames (population, history, peers). It outputs raw diagnostics $d$.
+3.  **The Control Surface ($\Pi: \mathbb{R}^k \to \mathbb{U}$)**: A stateless, deterministic logic layer that maps diagnostics $d$ to a formal control signal $u \in \mathbb{U}$ (e.g., `PROCEED`, `DEFER`, `ABSTAIN`).
+4.  **The Controller ($\mathcal{C}: \mathbb{U} \times \mathcal{K} \to \mathcal{A}$)**: The external system logic that consumes $u$ alongside system context $k \in \mathcal{K}$ to execute action $a \in \mathcal{A}$.
 
-The RLCS paradigm explicitly terminates at the control signal u.
-All execution logic resides outside the RLCS boundary.
 
-Figure 2 (Placeholder): RLCS system architecture. A learned encoder produces latent representations that are observed by an independent sensor array. Diagnostics are mapped by a deterministic control surface to explicit control signals, which are consumed by an external controller. Learning, sensing, signaling, and acting are strictly separated.
-
-### 3.2 The Sensor Array as a First Class System Component  
+### 3.2 RLCS Compliance Criteria  
 The sensor array \mathcal{S} consists of a set of independent functions:
 \mathcal{S} = \{ s_1, s_2, \dots, s_k \}, \quad s_i: \mathbb{R}^d \rightarrow \mathbb{R}
 
@@ -287,7 +282,7 @@ Agreement** {to be edited}
 
 Each class is defined by what it compares against, not by the specific metric used.
 
-Figure 2 (Placeholder): RLCS sensor taxonomy. Each sensor observes the same latent representation but evaluates it against a different reference frame: global population statistics, local temporal history, or an independent peer representation. Orthogonality arises from the reference frame, not from the implementation
+![Figure 2: RLCS sensor taxonomy. Each sensor observes the same latent representation but evaluates it against a different reference frame: global population statistics, local temporal history, or an independent peer representation. Orthogonality arises from the reference frame, not from the implementation] (figures/fig2_reslik_response.png)
 
 ### 4.3 Population Level Consistency Sensors
 Population-level sensors evaluate whether a representation is statistically consistent with a validated reference population, typically derived from training data.
@@ -578,76 +573,24 @@ For example:
 Each sensor contributes an orthogonal slice of validity evidence, and orthogonality is defined by reference frame, not by implementation details.
 
 ### 7.2 The Non-Arbitration Rule
-While sensors may emit conflicting diagnostics, RLCS explicitly forbids arbitration of truth between them.
+The Control Surface must not arbitrate "truth" between sensors (e.g., "ResLik is probably right, so ignore TCS"). Instead, it applies a conservative logic: **ambiguity is a signal in itself.**
 
-The control surface must not answer questions of the form:
+**Valid Composition (The Conservative OR):**
+$ \text{State} = \begin{cases} 
+\text{UNRELIABLE} & \text{if } \exists s \in \mathcal{S} : s(z) \text{ reports FAILURE} \\
+\text{RELIABLE} & \text{otherwise}
+\end{cases} $
 
-**“Which sensor is correct?”**
-
-Instead, RLCS adopts the principle that:
-
-Ambiguity is itself a reliability signal.
-
-Let d(z) = [d_1, \dots, d_k] denote the diagnostic vector. A conservative default composition can be expressed as:
-
-\text{Reliability}(z) =
-\begin{cases}
-\text{UNRELIABLE}, & \exists i \text{ such that } d_i(z) \in \text{FAILURE} \\
-\text{RELIABLE}, & \text{otherwise}
-\end{cases}
-
-This formulation captures the minimal invariant required by RLCS: a single hard failure is sufficient to invalidate representation reliability.
-
-Importantly, this rule represents a conservative baseline, not a mandatory policy. Systems may implement graded responses (e.g., DOWNWEIGHT vs. ABSTAIN) while preserving the non-arbitration constraint, provided that:
-
-• sensor outputs are not fused,
-• conflicting evidence is not suppressed,
-• and failure signals are not ignored due to majority agreement.
-
-### 7.3 Conservation Composition Semantics
-The semantics of RLCS composition can be summarized as follows:
-	•	Agreement across sensors strengthens confidence, but does not guarantee correctness.
-	•	Disagreement weakens reliability, even if one sensor reports nominal behavior.
-	•	Hard failures dominate soft signals, reflecting safety-oriented design.
-
-This approach mirrors established practice in safety-critical engineering, where independent sensors are used to bound risk rather than to optimize performance.
-
-### 7.4 Anti-Patterns
-The following practices violate RLCS invariants and collapse reliability sensing into opaque or misleading behavior:
-
-• **Representation Fusion**
-z_{\text{final}} = \sum_i w_i z_i
-Fusion erases evidence of disagreement by construction, preventing the system from detecting modal conflict.
-
-• **In-Sensor Smoothing**
-Applying temporal filters (e.g., Kalman filters) inside a sensor hides volatility from the controller. Smoothing is an actuation or estimation choice, not a sensing function.
-
-• **Majority Voting**
-Discarding a sensor signal because it is the minority outlier undermines safety guarantees. In many failure scenarios, the outlier sensor is the only one detecting imminent system breakdown.
-
-These anti-patterns conflate sensing with decision-making and reintroduce hidden policy logic into the reliability layer.
-
-### 7.5 Why Composition Matters
-Without explicit composition rules, multi-sensor systems inevitably drift toward:
-
-• implicit fusion,
-• heuristic overrides,
-• or ad hoc suppression of inconvenient signals.
-
-RLCS prevents this drift by enforcing structural constraints rather than prescribing behavior. By making ambiguity visible and refusing to resolve it internally, RLCS preserves interpretability and keeps responsibility where it belongs: in the external controller.
-
----
+### 7.3 Anti-Patterns
+*   **Fusion**: $z_{final} = w_1 z_1 + w_2 z_2$. This destroys the specific evidence of conflict.
+*   **Smoothing**: Applying Kalman filters *inside* the sensor. This hides volatility from the controller. Smoothing is an actuator function, not a sensor function.
+*   **Majority Voting**: Ignoring a sensor because it is the minority outlier. In safety systems, the outlier is often the only one seeing the crash.
 
 ## 8. Multi-System Demonstrations
-This section presents behavioral demonstrations of the RLCS paradigm across multiple system classes. The goal is not to benchmark task performance, but to evaluate whether RLCS sensors expose distinct and actionable reliability signals under controlled failure conditions.
 
-All demonstrations use the same architectural pattern:
-1. a fixed encoder producing latent representations,
-2. an RLCS sensor array (ResLik, TCS, Agreement),
-3. a deterministic control surface,
-4. an external controller that reacts to emitted signals.
+We validated the RLCS paradigm by implementing reference controllers across three distinct domains using the `resLik` library.
 
-No retraining, ensemble inference, or task-specific heuristics are introduced.
+![Figure 3: Multi-Sensor Response to Different Failure Modes. A simulated scenario shows how ResLik detects gradual drift (Population failure) while TCS remains stable, and how TCS detects sudden shock (Temporal failure). Agreement detects sensor conflict independently. This orthogonality allows nuanced control decisions.](figures/fig4_multisensor.png)
 
 ### 8.1 Applied AI Pipelines
 We first consider an applied AI pipeline resembling a Retrieval-Augmented Generation (RAG) or multi-stage inference system, where downstream components implicitly assume that upstream embeddings are semantically valid.
