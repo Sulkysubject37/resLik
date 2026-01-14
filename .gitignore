@@ -22,3 +22,13 @@ cpp/build/
 .vscode/
 .idea/
 /reslik/
+
+# LaTeX / PDF
+*.pdf
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk

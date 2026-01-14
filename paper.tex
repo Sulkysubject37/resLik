@@ -5,11 +5,7 @@
 \usepackage{graphicx}
 \usepackage{geometry}
 \usepackage{hyperref}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
 \usepackage{booktabs}
-\usepackage{caption}
-\usepackage{subcaption}
 \usepackage{natbib}
 
 % Page layout
@@ -17,8 +13,9 @@
 
 % Title and Author
 \title{\textbf{Reliability Is a System Property: The Representation-Level Control Surfaces (RLCS) Paradigm}}
-\authorട
-    The resLik Project Team \\
+\author{
+    Md Arshad \\
+    Department of Computer Science, Jamia Millia Islamia \\
     \texttt{https://github.com/Sulkysubject37/resLik}
 }
 \date{January 12, 2026}
@@ -50,95 +47,196 @@ The dominant research response to this challenge has been to improve the learnin
 
 We argue that relying on the learner to self-diagnose is architecturally insufficient. Just as a physical control system uses independent sensors (e.g., tachometers, accelerometers) to validate actuator performance, a neural system requires independent, deterministic observation of its latent representations.
 
-\subsection{Thesis and Contributions}
-This paper posits the following thesis: \textbf{Reliability is not a property learned by models, but a property sensed and managed by systems.}
+\subsection{Reliability as a System Property}
+This paper advances a simple but structural thesis:
 
-To operationalize this thesis, we introduce the \textbf{Representation-Level Control Surfaces (RLCS)} paradigm. RLCS is an architectural pattern that inserts a distinct layer of observability and control logic between representation learning and downstream execution.
+Reliability is not a property learned by models, but a property sensed and managed by systems.
 
-Our primary contributions are:
+Under this view, reliability must be externalized from the learning objective and treated as a first-class system signal. Rather than asking models to self-assess their trustworthiness, systems should independently sense whether latent representations remain consistent with known reference frames, and manage execution accordingly.
+
+We operationalize this thesis through the Representation-Level Control Surfaces (RLCS) paradigm. RLCS introduces an explicit reliability-sensing layer between representation learning and downstream execution. This layer observes latent representations directly, emits interpretable diagnostic signals, and enables deterministic control responses without embedding policy logic into the model itself.
+
+\subsection{Contributions}
+This work makes the following contributions:
 \begin{enumerate}
-    \item \textbf{Formalization of RLCS}: We define a systems architecture that strictly separates \textit{sensing} (measuring consistency), \textit{signaling} (mapping measures to recommendations), and \textit{acting} (executing decisions).
-    \item \textbf{RLCS Sensor Taxonomy}: We establish a classification of independent reliability sensors---Population-Level, Temporal, and Cross-View---and define their distinct roles in detecting orthogonal failure modes.
-    \item \textbf{Reference Instantiations}: We present \textbf{resLik}, a likelihood-consistency sensor, alongside the \textbf{Temporal Consistency Sensor (TCS)} and \textbf{Agreement Sensor}, defining their mathematical formulations as forward-only, $O(d)$ operations.
-    \item \textbf{Composition Rules}: We articulate the principles of sensor composition, demonstrating how multiple reliability signals can coexist without collapsing into complex, opaque fusion logic.
-    \item \textbf{Multi-System Validation}: We demonstrate the paradigm's universality through reference implementations in applied AI pipelines, robotics perception stacks, and high-throughput data systems.
+    \item \textbf{RLCS Paradigm}: We formalize Representation-Level Control Surfaces as a systems architecture that strictly separates reliability sensing, control signaling, and execution acting.
+    \item \textbf{Sensor Taxonomy}: We define a taxonomy of representation-level reliability sensors---Population-Level, Temporal, and Cross-View---each targeting an orthogonal failure mode.
+    \item \textbf{Reference Instantiations}: We present resLik (a population-level likelihood-consistency sensor), the Temporal Consistency Sensor (TCS), and an Agreement Sensor, each implemented as forward-only, linear-time operations.
+    \item \textbf{Composition Rules}: We articulate principled rules for composing multiple reliability sensors without fusion, voting, or arbitration.
+    \item \textbf{Multi-System Demonstrations}: We demonstrate RLCS behavior across applied AI pipelines, robotics perception systems, and high-throughput data ingestion workflows.
 \end{enumerate}
+
+\subsection{Paper Organization}
+The remainder of this paper is structured as follows. Section 2 formalizes the notion of reliability and outlines system-level design requirements. Section 3 introduces the RLCS architecture and compliance criteria. Section 4 presents the RLCS sensor taxonomy, followed by mathematical formulations in Section 5. Section 6 describes the control surface design, and Section 7 details sensor composition rules. Section 8 demonstrates RLCS behavior across multiple system domains. Limitations and failure modes are discussed in Section 9, followed by related work in Section 10. We conclude with broader implications and future directions in Sections 11 and 12.
 
 \section{Problem Formulation and Design Goals}
+This section formalizes what is meant by reliability in the RLCS paradigm and derives the system-level constraints that any representation-level reliability mechanism must satisfy. We also explicitly delineate the boundaries of the paradigm to prevent misinterpretation.
 
 \subsection{What Reliability Is (and Is Not)}
-In the context of RLCS, we define \textbf{reliability} specifically as the statistical consistency of a latent representation with a validated reference frame. To avoid ambiguity, we distinguish this definition from related concepts:
+In the context of RLCS, reliability is defined as the statistical consistency of a latent representation with respect to a validated reference frame. The reference frame may correspond to a global training population, a local temporal history, or an independent peer representation.
+
+Crucially, reliability in this sense is a property of representation validity, not task performance. To avoid conceptual overlap with existing terminology, we distinguish this definition from several related but non-equivalent concepts:
 
 \begin{itemize}
-    \item \textbf{Reliability $\neq$ Accuracy}: A model can be reliable (the input is consistent with training data) but wrong (it misclassifies the input). RLCS guarantees the validity of the \textit{question}, not the \textit{answer}.
-    \item \textbf{Reliability $\neq$ Uncertainty}: Uncertainty is a broad probabilistic concept encompassing epistemic and aleatoric factors. RLCS focuses on the specific observability of manifold deviation using deterministic metrics.
-    \item \textbf{Reliability $\neq$ Calibration}: Calibration aligns output probabilities with empirical frequencies (e.g., ``if I say 70\%, I am right 70\% of the time''). RLCS validates the input evidence \textit{before} any output is generated.
+    \item \textbf{Reliability $\neq$ Accuracy}: A model may operate on a representation that is statistically consistent with its training distribution and still produce an incorrect output due to class ambiguity, label noise, or task complexity. RLCS validates the appropriateness of the input evidence, not the correctness of the prediction. It guarantees that the system is asking a valid question, not that it will produce the correct answer.
+    \item \textbf{Reliability $\neq$ Uncertainty}: Uncertainty typically refers to probabilistic measures over model outputs, encompassing epistemic and aleatoric components. RLCS does not attempt to estimate uncertainty in this sense. Instead, it deterministically measures deviations in latent space relative to explicit reference statistics. As a result, RLCS produces interpretable diagnostics rather than probabilistic beliefs.
+    \item \textbf{Reliability $\neq$ Calibration}: Calibration concerns the alignment between predicted probabilities and empirical outcome frequencies (e.g., a prediction of 0.7 being correct 70\% of the time). RLCS operates prior to output generation and does not depend on labeled outcomes. It evaluates whether the internal representation itself lies within a regime where calibrated predictions are even meaningful.
 \end{itemize}
+
+By construction, RLCS treats reliability as an observability problem: can the system determine, at runtime, whether its internal state remains within a validated operating envelope?
 
 \subsection{System-Level Requirements}
-To function as a control surface in production systems, reliability mechanisms must satisfy strict engineering constraints often ignored by pure machine learning research:
+For representation-level reliability sensing to function as a control surface in real systems, it must satisfy a set of engineering constraints that are often secondary in purely algorithmic research but dominant in production environments.
 
 \begin{enumerate}
-    \item \textbf{Observability}: The mechanism must expose \textit{why} reliability is low. A ``shock'' (temporal discontinuity) requires a different system response than ``drift'' (gradual distribution shift).
-    \item \textbf{Interpretability}: Signals must be discrete and semantic (e.g., \texttt{ABSTAIN}, \texttt{DEFER}) rather than continuous probabilities, to facilitate deterministic system logic and auditability.
-    \item \textbf{Composability}: Adding a new sensor (e.g., checking temporal coherence) should not require retraining the primary encoder or re-architecting the pipeline.
-    \item \textbf{Determinism}: Given fixed inputs and fixed parameters, the output signal must be constant. There is no room for stochastic sampling in a safety-critical interlock.
-    \item \textbf{Runtime Efficiency}: The cost of sensing must be negligible compared to the cost of the encoder. We target $O(d)$ complexity where $d$ is the latent dimension, avoiding $O(d^2)$ covariance operations.
+    \item \textbf{Observability}: The mechanism must expose why a representation is deemed unreliable. Distinct failure modes---such as abrupt temporal discontinuities versus gradual distributional drift---must be separable, as they imply different downstream responses.
+    \item \textbf{Interpretability}: Reliability signals must be discrete and semantically meaningful (e.g., PROCEED, DOWNWEIGHT, DEFER, ABSTAIN). Continuous scores alone are insufficient for deterministic system logic, safety audits, and post hoc analysis.
+    \item \textbf{Composability}: Reliability mechanisms must be modular. Introducing an additional sensor (e.g., temporal coherence) should not require retraining the encoder, modifying existing sensors, or restructuring the pipeline. Each sensor must operate independently.
+    \item \textbf{Determinism}: Given fixed inputs and fixed parameters, the sensing and signaling process must be deterministic. Stochastic sampling, randomized inference, or non-reproducible behavior is incompatible with safety interlocks and audit requirements.
+    \item \textbf{Runtime Efficiency}: The computational cost of reliability sensing must be negligible relative to representation extraction. RLCS sensors are therefore constrained to operations linear in the representation dimension ($O(d)$), avoiding covariance estimation or quadratic interactions that scale poorly in high-dimensional latent spaces.
 \end{enumerate}
 
+Together, these requirements imply that reliability sensing must be \textbf{cheap, explicit, and externally controllable}, rather than statistically optimal in isolation.
+
 \subsection{Explicit Non-Goals}
-To prevent scope creep and maintain architectural integrity, RLCS explicitly excludes:
+To preserve architectural clarity and avoid scope creep, RLCS explicitly excludes the following objectives:
+
 \begin{itemize}
-    \item \textbf{End-to-End Learning}: The sensor layer is not optimized via backpropagation during deployment. It is a fixed function.
-    \item \textbf{Automatic Correction}: RLCS detects anomalies; it does not attempt to reconstruct, denoised, or ``fix'' data. Attempting to fix data introduces the risk of hallucination.
-    \item \textbf{Controller Design}: The paradigm provides signals to a controller but does not define the control policy itself (e.g., how to steer the car).
+    \item \textbf{End-to-End Learning}: The sensing layer is not optimized via backpropagation during deployment. RLCS sensors are fixed functions whose parameters are configured offline. This design choice ensures predictability and decouples sensing from task optimization.
+    \item \textbf{Automatic Correction or Reconstruction}: RLCS detects unreliable representations but does not attempt to repair, denoise, or hallucinate corrected inputs. Automatic correction conflates sensing with acting and introduces unobservable failure modes.
+    \item \textbf{Controller or Policy Design}: RLCS does not prescribe how a system should respond to reliability signals. Control policies---such as braking, rerouting, deferring to a human operator, or triggering retraining---remain entirely external to the paradigm.
 \end{itemize}
+
+These exclusions are not limitations but deliberate design decisions. RLCS is concerned with making reliability visible, not with resolving uncertainty or optimizing behavior.
 
 \section{Representation-Level Control Surfaces (RLCS)}
 
 \subsection{Architectural Overview}
-The RLCS paradigm mandates a unidirectional information flow through four distinct functional layers. This structure ensures that reliability sensing is decoupled from both the learning objective of the model and the utility function of the application.
+RLCS introduces an explicit reliability observability layer between representation learning and execution. The architecture enforces a unidirectional flow of information and a strict separation of concerns.
 
-Let the system be defined as a tuple $(\mathcal{E}, \mathcal{S}, \Pi, \mathcal{C})$:
-
+We model an RLCS-compliant system as a tuple:
 \begin{equation}
-    \text{Env} \xrightarrow{x} \mathcal{E} \xrightarrow{z} \mathcal{S} \xrightarrow{d} \Pi \xrightarrow{u} \mathcal{C} \xrightarrow{a} \text{Actuator}
+    (\mathcal{E}, \mathcal{S}, \Pi, \mathcal{C})
 \end{equation}
 
+with the following functional composition:
+\begin{equation}
+    x \xrightarrow{\mathcal{E}} z \xrightarrow{\mathcal{S}} d \xrightarrow{\Pi} u \xrightarrow{\mathcal{C}} a
+\end{equation}
+
+where:
 \begin{enumerate}
     \item \textbf{The Encoder ($\mathcal{E}: \mathcal{X} \to \mathbb{R}^d$)}: Maps raw input $x$ to a latent representation $z$. The encoder is treated as a ``state estimator'' that is frozen or updated independently.
     \item \textbf{The Sensor Array ($\mathcal{S}: \mathbb{R}^d \to \mathbb{R}^k$)}: A set of independent functions that measure the consistency of $z$ against various reference frames (population, history, peers). It outputs raw diagnostics $d$.
-    \item \textbf{The Control Surface ($\Pi: \mathbb{R}^k \to \mathbb{U}$)}: A stateless, deterministic logic layer that maps diagnostics $d$ to a formal control signal $u \in \mathbb{U}$ (e.g., {\texttt{PROCEED}, \texttt{DEFER}, \texttt{ABSTAIN}}).
-    \item \textbf{The Controller ($\mathcal{C}: \mathbb{U} \times \mathcal{K} \to \mathcal{A}$)}: The external system logic that consumes $u$ alongside system context $k \in \mathcal{K}$ to execute action $a \in \mathcal{A}$.
+    \item \textbf{The Control Surface ($\Pi: \mathbb{R}^k \to \mathcal{U}$)}: A stateless, deterministic logic layer that maps diagnostics $d$ to a formal control signal $u \in \mathcal{U}$ (e.g., \texttt{PROCEED}, \texttt{DEFER}, \texttt{ABSTAIN}).
+    \item \textbf{The Controller ($\mathcal{C}: \mathcal{U} \times \mathcal{K} \to \mathcal{A}$)}: The external system logic that consumes $u$ alongside system context $k \in \mathcal{K}$ to execute action $a \in \mathcal{A}$.
 \end{enumerate}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{figures/fig1_architecture.pdf}
-    \caption{The RLCS Architectural Data Flow. Note the strict separation between sensing, signaling, and acting.}
+    \caption{Schematic overview of the RLCS architecture, illustrating the separation between representation learning (encoder), reliability sensing (sensor array), control signaling (control surface), and external execution (controller).}
     \label{fig:architecture}
 \end{figure}
 
-\subsection{RLCS Compliance Criteria}
-For a system to be considered RLCS-compliant, it must adhere to the following invariants:
+\subsection{RLCS Sensor Array}
+The sensor array $\mathcal{S}$ consists of a set of independent functions:
+\begin{equation}
+    \mathcal{S} = \{ s_1, s_2, \dots, s_k \}, \quad s_i: \mathbb{R}^d \rightarrow \mathbb{R}
+\end{equation}
+
+Each sensor observes the same latent representation $z$, but evaluates it against a distinct reference frame: population statistics, temporal history, or peer representations. The output of the sensor array is a diagnostic vector:
+\begin{equation}
+    d = \mathcal{S}(z) = \big[ s_1(z), s_2(z), \dots, s_k(z) \big]
+\end{equation}
+
+Key properties of RLCS sensors:
 \begin{itemize}
-    \item \textbf{Passive Sensing}: Sensors do not modify the representation $z$ for downstream tasks (unless explicitly gating for noise suppression as a verified pre-processing step).
-    \item \textbf{Non-Executive}: The sensor layer never executes side effects (e.g., stopping a robot, writing to a database). It only emits informational signals.
-    \item \textbf{Stateless Evaluation}: Aside from essential bounded buffers (e.g., $z_{t-1}$ for temporal checks), sensors maintain no long-term state or learned weights that adapt online.
-    \item \textbf{No Arbitration}: The sensor array does not vote or fuse signals. It presents raw diagnostics to the Control Surface.
+    \item Forward-only: no gradients are required or propagated.
+    \item Linear-time: each $s_i$ operates in $O(d)$.
+    \item Semantically interpretable: each diagnostic corresponds to a specific failure mode.
+    \item Orthogonal by construction: sensors do not modify or condition each other.
 \end{itemize}
 
-\subsection{Distinction from Existing Paradigms}
-RLCS is distinct from \textbf{Ensemble Learning} because sensors do not vote on the final prediction; they observe the properties of the representation itself. It is distinct from \textbf{Runtime Monitoring} because RLCS is active—it sits on the critical path of execution and can gate data flow in real-time ($<1$ms), rather than passively logging alerts to a dashboard for later analysis.
+Importantly, sensors do not alter the representation $z$. They observe; \textbf{they do not intervene}.
+
+\subsection{Control Surface: From Diagnostics to Signals}
+The control surface $\Pi$ is a deterministic mapping from diagnostics to a finite signal set:
+\begin{equation}
+    \Pi: \mathbb{R}^k \rightarrow \mathcal{U}
+\end{equation}
+
+where:
+\begin{equation}
+    \mathcal{U} = \{ \texttt{PROCEED}, \texttt{DOWNWEIGHT}, \texttt{DEFER}, \texttt{ABSTAIN} \}
+\end{equation}
+
+Unlike probabilistic thresholds or learned policies, $\Pi$ is explicitly rule-based. A typical instantiation takes the form:
+\begin{equation}
+    u =
+    \begin{cases}
+    \texttt{ABSTAIN}, & \exists i : s_i(z) > \tau_i^{\text{hard}} \\
+    \texttt{DEFER}, & \exists i : s_i(z) > \tau_i^{\text{soft}} \\
+    \texttt{DOWNWEIGHT}, & \text{marginal violations} \\
+    \texttt{PROCEED}, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+where $\tau_i^{\text{hard}}$ and $\tau_i^{\text{soft}}$ are sensor-specific thresholds. This mapping ensures reproducibility, auditability, and explicit risk tolerance configuration. The control surface does not arbitrate truth between sensors; it encodes conservative system policy.
+
+\subsection{External Controller and Responsibility Boundary}
+The external controller $\mathcal{C}$ consumes the control signal $u$ alongside system context $k \in \mathcal{K}$ to execute an action:
+\begin{equation}
+    a = \mathcal{C}(u, k)
+\end{equation}
+
+Examples include braking or slowing a robot, routing data to a fallback model, deferring to human review, or tagging samples for retraining. RLCS deliberately excludes $\mathcal{C}$ from its scope. This boundary enforces clear responsibility separation:
+\begin{itemize}
+    \item RLCS answers: ``Is this representation reliable?''
+    \item The controller answers: ``What should we do about it?''
+\end{itemize}
+
+\subsection{RLCS Compliance Criteria}
+A system is considered RLCS-compliant if it satisfies the following invariants:
+\begin{enumerate}
+    \item \textbf{Passive Sensing}: Sensors observe representations but do not modify them for downstream tasks.
+    \item \textbf{Non-Executive Operation}: No sensor or control surface component executes side effects.
+    \item \textbf{Bounded State}: Sensors may retain minimal bounded state (e.g., $z_{t-1}$) but no adaptive memory.
+    \item \textbf{No Arbitration or Fusion}: Sensor outputs are not averaged, voted on, or fused into a single scalar.
+    \item \textbf{Deterministic Semantics}: Identical inputs produce identical diagnostics and signals.
+\end{enumerate}
+
+Violating any of these conditions collapses RLCS into either a learning algorithm or a controller, breaking the paradigm.
+
+\subsection{Distinction from Related Architectures}
+RLCS is structurally distinct from several adjacent approaches:
+\begin{itemize}
+    \item \textbf{Ensemble Learning}: Ensembles aggregate predictions to improve accuracy. RLCS does not aggregate predictions; it observes representation validity.
+    \item \textbf{Uncertainty Estimation}: Probabilistic uncertainty quantifies belief over outputs. RLCS emits deterministic diagnostics tied to explicit reference frames.
+    \item \textbf{Runtime Monitoring}: Traditional monitors log alerts asynchronously. RLCS sits on the execution path and gates system behavior in real time.
+    \item \textbf{Control Policies}: RLCS does not decide actions. It provides evidence to systems that do.
+\end{itemize}
+
+These distinctions are architectural, not merely implementation choices. The mathematical instantiations of these sensors are defined in Section 5.
 
 \section{RLCS Sensor Taxonomy}
 
-We formalize three classes of sensors necessary for comprehensive reliability sensing. Each targets a specific, orthogonal failure mode of latent representations.
+Reliability at the representation level is inherently multi-dimensional. No single diagnostic can distinguish all failure modes encountered in open-world systems. RLCS therefore formalizes sensors as first-class, independent observers of latent representations, each defined by the reference frame against which consistency is evaluated.
+
+This section introduces a taxonomy of RLCS sensors based on their reference frame and the class of failure modes they detect.
+
+\subsection{Sensor as First Class Observers}
+An RLCS sensor is a deterministic function $s: \mathbb{R}^d \rightarrow \mathbb{R}$ that evaluates a latent representation $z$ against a specific reference frame. The defining property of an RLCS sensor is not its mathematical form, but its epistemic role: each sensor answers a different question about representation validity.
+
+Crucially, sensors do not predict labels, do not estimate correctness, and do not modify representations. They answer only: Is this representation consistent with respect to a particular notion of validity? Different notions of validity correspond to different reference frames.
+
+\subsection{Taxonomy by Reference Frame}
+We formalize three classes of RLCS sensors, each targeting an orthogonal failure mode. Together, they span the dominant sources of representation unreliability in deployed systems.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{figures/fig2_taxonomy.pdf}
-    \caption{The RLCS Sensor Taxonomy.}
+    \caption{RLCS sensor taxonomy. Each sensor observes the same latent representation but evaluates it against a different reference frame: global population statistics, local temporal history, or an independent peer representation. Orthogonality arises from the reference frame, not from the implementation.}
     \label{fig:taxonomy}
 \end{figure}
 
@@ -146,7 +244,7 @@ We formalize three classes of sensors necessary for comprehensive reliability se
     \centering
     \begin{tabular}{@{}llll@{}}
         \toprule
-        \textbf{Sensor Type} & \textbf{Reference Frame} & \textbf{Target Failure Mode} & \textbf{Example} \\
+        \textbf{Sensor Class} & \textbf{Reference Frame} & \textbf{Primary Failure Mode} & \textbf{Example} \\
         \midrule
         Population-Level & Global Training Set & Out-of-Distribution (OOD) & \textbf{resLik} \\
         Temporal & Local History ($t-1$) & Shock, Glitch, Instability & \textbf{TCS} \\
@@ -158,41 +256,70 @@ We formalize three classes of sensors necessary for comprehensive reliability se
 \end{table}
 
 \subsection{Population-Level Consistency: ResLik}
-The \textbf{Likelihood-Consistency Sensor (ResLik)} measures the deviation of the current representation $z$ from the global manifold defined by the training data.
-\begin{itemize}
-    \item \textbf{What it Senses}: The statistical likelihood of $z$ assuming it was generated by the same process as the training set.
-    \item \textbf{Reference}: Static statistics (mean $\mu$, variance $\sigma$) of the training population.
-    \item \textbf{Failure Modes}: OOD inputs, semantic novelties, adversarial attacks.
-    \item \textbf{Blind Spot}: It cannot distinguish between ``valid novelty'' (concept drift) and ``invalid error'' (corruption).
-\end{itemize}
+Population-level sensors evaluate whether a representation is statistically consistent with a validated reference population, typically derived from training data.
+
+\textbf{Definition}: Let $\mathcal{P}$ denote a reference population in latent space, summarized by fixed statistics. A population-level sensor evaluates the deviation of $z$ from $\mathcal{P}$.
+
+\textbf{Failure Modes Detected}: Out-of-distribution inputs, semantic novelty, adversarial or corrupted samples.
+
+\textbf{Representative Instantiation: ResLik}: The Residual Likelihood Sensor (ResLik) measures normalized deviation of $z$ from population statistics. It answers the question: \textit{Does this representation plausibly belong to the same distribution as the training data?}
+
+\textbf{Blind Spot}: Population-level sensors cannot distinguish valid novelty (e.g., concept drift) from invalid corruption. Both appear as deviation from the reference distribution.
 
 \subsection{Temporal Consistency: TCS}
-The \textbf{Temporal Consistency Sensor (TCS)} measures the coherence of the representation's evolution over time.
-\begin{itemize}
-    \item \textbf{What it Senses}: The magnitude of change in $z$ between discrete time steps.
-    \item \textbf{Reference}: The immediate local history (e.g., $z_{t-1}$).
-    \item \textbf{Failure Modes}: Sudden shocks, sensor glitches, discontinuous trajectories that violate physical constraints.
-    \item \textbf{Blind Spot}: It cannot detect slow, gradual drift away from the valid manifold.
-\end{itemize}
+Temporal sensors evaluate whether a representation evolves coherently over time.
+
+\textbf{Definition}: Let $z_t$ and $z_{t-1}$ denote successive latent representations. A temporal sensor measures the magnitude and structure of change between them, normalized to ensure scale invariance.
+
+\textbf{Failure Modes Detected}: Sudden shocks or glitches, sensor dropouts, physically implausible state transitions.
+
+\textbf{Representative Instantiation: TCS}: The Temporal Consistency Sensor (TCS) evaluates short-horizon self-consistency. It answers the question: \textit{Is the system changing faster or more abruptly than expected?}
+
+\textbf{Blind Spot}: Temporal sensors are insensitive to slow, monotonic drift. A representation can remain temporally smooth while gradually departing from the valid population manifold.
 
 \subsection{Cross-View Consistency: Agreement Sensor}
-The \textbf{Agreement Sensor} measures the semantic alignment between two independent representations of the same input (e.g., Lidar vs. Camera, or Student vs. Teacher models).
+Cross-view sensors evaluate agreement between independent representations of the same underlying input.
+
+\textbf{Definition}: Let $z^{(1)}$ and $z^{(2)}$ denote representations derived from distinct modalities, models, or pipelines. A cross-view sensor measures their geometric or semantic alignment.
+
+\textbf{Failure Modes Detected}: Modal disagreement, partial sensor failure, ambiguous or conflicting evidence.
+
+\textbf{Representative Instantiation: Agreement Sensor}: The Agreement Sensor measures alignment (e.g., cosine similarity) between peer representations. It answers the question: \textit{Do independent observers agree on the state of the world?}
+
+\textbf{Blind Spot}: Cross-view sensors cannot detect common-mode failures, where multiple sensors fail in the same correlated manner.
+
+\subsection{Orthogonality and Complementarity}
+The strength of the RLCS sensor taxonomy lies in orthogonality by reference frame:
 \begin{itemize}
-    \item \textbf{What it Senses}: The cosine similarity or geometric alignment between vectors $z^{(1)}$ and $z^{(2)}$.
-    \item \textbf{Reference}: A peer representation.
-    \item \textbf{Failure Modes}: Modal conflict, partial sensor failure (where one sensor breaks but stays in-distribution), ambiguity.
-    \item \textbf{Blind Spot}: It fails if both sensors fail in an identical, correlated manner (common mode failure).
+    \item Population-level sensors compare against what was seen before.
+    \item Temporal sensors compare against what just happened.
+    \item Cross-view sensors compare against what another observer sees.
 \end{itemize}
+
+Because each sensor encodes a distinct notion of validity, their signals are complementary rather than redundant. This orthogonality enables conservative, interpretable system behavior when sensors are composed, without resorting to fusion or arbitration.
 
 \section{Mathematical Formulation}
 
-All RLCS sensors share a design philosophy: they are forward-only, monotonic, scale-aware, and computationally strictly bounded to $O(d)$. We define their formulations below.
+This section presents the mathematical formulation of the RLCS sensor family. All sensors are designed as forward-only, deterministic functions over latent representations, with bounded computational cost and interpretable semantics. The emphasis is not on probabilistic optimality, but on structural reliability observability.
+
+Throughout, let $z \in \mathbb{R}^d$ denote a latent representation produced by a fixed encoder.
+
+\subsection{Shared Design Properties}
+All RLCS sensors satisfy the following mathematical constraints:
+\begin{enumerate}
+    \item \textbf{Forward-Only Evaluation}: Each sensor is a fixed function $s: \mathbb{R}^d \rightarrow \mathbb{R}$ evaluated at inference time. No gradients, sampling, or optimization are involved.
+    \item \textbf{Monotonicity}: Sensor outputs are monotonic with respect to the magnitude of deviation from their reference frame. Larger deviations produce larger discrepancy scores or lower consistency scores.
+    \item \textbf{Scale Awareness}: Sensors normalize raw deviations to avoid coupling diagnostic magnitude to the absolute scale of the representation.
+    \item \textbf{Linear-Time Complexity}: All operations scale linearly with representation dimension $d$ ($O(d)$), ensuring negligible overhead relative to encoding.
+\end{enumerate}
+
+These properties ensure that sensors are predictable, composable, and suitable for real-time systems.
 
 \subsection{ResLik Formulation}
 ResLik computes a normalized discrepancy score $D_{\text{pop}}$ and a gating factor $g$. Given input $z \in \mathbb{R}^d$ and frozen reference statistics $\mu, \sigma \in \mathbb{R}^d$:
 
 \begin{equation}
-    \tilde{z}_i = \frac{z_i - \mu_i}{\sigma_i + \epsilon}
+    \tilde{z}_i = \frac{z_i - \mu_i}{\sigma_i + \epsilon}, \quad i = 1, \dots, d
 \end{equation}
 
 The discrepancy is the mean absolute deviation (Z-score equivalent) across dimensions:
@@ -224,40 +351,70 @@ TCS computes a normalized drift score $D_{\text{time}}$ based on the Euclidean d
 
 The temporal consistency score $T_{\text{consistency}}$ is mapped monotonically to $[0, 1]$:
 \begin{equation}
-    T_{\text{consistency}} = \exp
-
-\left(-\alpha \cdot D_{\text{time}}\right)
+    T_{\text{consistency}} = \exp\left(-\alpha \cdot D_{\text{time}}\right)
 \end{equation}
 where $\alpha$ is a sensitivity hyperparameter.
 
 \subsection{Agreement Formulation}
-The Agreement Sensor utilizes cosine similarity to measure alignment, decoupling magnitude from semantic direction. Given two representations $z^{(1)}$ and $z^{(2)}$:
-
+The Agreement Sensor evaluates consistency between two independent representations of the same input. Let $z^{(1)}, z^{(2)} \in \mathbb{R}^d$ denote peer representations. Agreement is measured via cosine similarity:
 \begin{equation}
-    A = \frac{z^{(1)} \cdot z^{(2)}}{\|z^{(1)}\|_2 \|z^{(2)}\|_2 + \epsilon}
+    A(z^{(1)}, z^{(2)}) = \frac{ z^{(1)} \cdot z^{(2)} } { \| z^{(1)} \|_2 \, \| z^{(2)} \|_2 + \epsilon }
 \end{equation}
 
-We define the disagreement metric $D_{\text{agree}}$:
+This yields a bounded score $A \in [-1, 1]$, where higher values indicate stronger alignment. We define the disagreement metric as:
 \begin{equation}
     D_{\text{agree}} = 1 - A
 \end{equation}
+which maps perfect agreement to zero and increasing misalignment to larger values.
 
-This creates a bounded metric $A \in [-1, 1]$ where 1 indicates perfect redundancy, 0 indicates orthogonality, and -1 indicates opposition.
+\subsection{Unified Diagnostic Vector}
+For a system employing all three sensors, the diagnostic output takes the form:
+\begin{equation}
+    d(z) = \big[ D_{\text{pop}}(z),\; D_{\text{time}}(z_t),\; D_{\text{agree}}(z^{(1)}, z^{(2)}) \big]
+\end{equation}
+
+Each component corresponds to a distinct notion of validity and must be interpreted independently. RLCS explicitly forbids collapsing this vector into a single scalar score.
+
+The diagnostic vector is consumed by the control surface, described in Section 6.
 
 \section{Control Surface Design}
 
-\subsection{From Signals to Recommendations}
-The Control Surface ($\Pi$) functions as a deterministic translation layer. It converts the continuous, high-dimensional diagnostic data ($D_{\text{pop}}, D_{\text{time}}, A$) into a low-dimensional discrete enumeration. We define a standard set of control signals:
+\subsection{From Diagnostics to Control Signals}
+The control surface $\Pi$ is defined as a deterministic mapping:
+\begin{equation}
+    \Pi : \mathbb{R}^k \rightarrow \mathcal{U}
+\end{equation}
+where $\mathcal{U}$ is a finite, semantically interpretable signal set. Given a diagnostic vector $d(z) = [D_{\text{pop}}, D_{\text{time}}, D_{\text{agree}}]$, the role of $\Pi$ is to compress continuous, high-dimensional evidence into a discrete control recommendation.
 
+We define the canonical RLCS signal set as:
 \begin{itemize}
-    \item \textbf{PROCEED}: All sensors report consistency within nominal bounds.
-    \item \textbf{DOWNWEIGHT}: Consistency is marginal; reduce the influence of this observation in downstream fusion or aggregation.
-    \item \textbf{DEFER}: Reliability is insufficient for automated decision; route to fallback (human-in-the-loop or rule-based backup).
-    \item \textbf{ABSTAIN}: Representation is invalid (shock, corruption); discard data immediately to protect system state.
+    \item \textbf{PROCEED}: All diagnostics lie within nominal bounds.
+    \item \textbf{DOWNWEIGHT}: Diagnostics indicate marginal inconsistency. The representation may be usable, but its influence should be reduced.
+    \item \textbf{DEFER}: Reliability is insufficient for autonomous execution. The representation should be routed to a fallback mechanism.
+    \item \textbf{ABSTAIN}: One or more diagnostics indicate a hard violation (e.g., shock, corruption). The representation is invalid and should be discarded.
 \end{itemize}
 
-\subsection{Determinism and Auditability}
-The mapping $\Pi$ is strictly deterministic. This ensures that the system's reaction to uncertainty is reproducible. Unlike probability thresholds which may shift with model retraining, RLCS thresholds are explicit parameters of the surface, making the system's risk tolerance auditable and configurable by systems engineers. The logic is typically implemented as a set of monotonic threshold rules (e.g., ``If $D_{\text{pop}} > 3.0$, then ABSTAIN'').
+These signals are \textbf{recommendations}, not commands. Their semantics are intentionally abstract, allowing different systems to map them to context-appropriate actions.
+
+\subsection{Deterministic Logic and Thresholding}
+The defining property of the control surface is \textbf{determinism}. A typical control surface instantiation is expressed as a monotonic rule set:
+\begin{equation}
+    \Pi(d) =
+    \begin{cases}
+    \texttt{ABSTAIN}, & \exists i : d_i > \tau_i^{\text{hard}} \\
+    \texttt{DEFER}, & \exists i : d_i > \tau_i^{\text{soft}} \\
+    \texttt{DOWNWEIGHT}, & \text{marginal violations} \\
+    \texttt{PROCEED}, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+where $\tau_i^{\text{hard}}$ and $\tau_i^{\text{soft}}$ are sensor-specific thresholds. Key properties include monotonicity, explicit risk encoding, and reproducibility.
+
+\subsection{Auditability and Responsibility Separation}
+Because the control surface is deterministic and rule-based, it provides a transparent audit trail. Responsibility is explicitly partitioned: RLCS answers ``Is this representation reliable?'' while the controller answers ``What should be done given that assessment?'' This separation prevents hidden policy decisions from being embedded inside statistical models.
+
+\subsection{Control Surface vs. Controllers}
+Although the control surface emits signals that influence behavior, it is not a controller in the control-theoretic sense. Controllers map state to actions; control surfaces map diagnostics to recommendations. By keeping control logic external, RLCS ensures that reliability sensing remains general and reusable.
 
 \section{Sensor Composition Rules}
 
@@ -296,58 +453,91 @@ We validated the RLCS paradigm by implementing reference controllers across thre
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{figures/fig4_multisensor.pdf}
-    \caption{Multi-Sensor Response to Different Failure Modes.}
+    \caption{Multi-Sensor Response to Different Failure Modes. A simulated scenario shows how ResLik detects gradual drift while TCS remains stable, and how TCS detects sudden shock independently. Agreement detects sensor conflict independently.}
     \label{fig:multisensor}
 \end{figure}
 
 \subsection{Applied AI Pipelines}
-In a simulated Retrieval-Augmented Generation (RAG) pipeline, we injected OOD inputs (distribution shift) and sudden semantic shocks.
-\begin{itemize}
-    \item \textbf{Scenario}: The system received valid text embeddings, then gradually shifted to a different domain, then suddenly received random noise vectors.
-    \item \textbf{Behavior}: ResLik correctly identified gradual drift, triggering a \texttt{DOWNWEIGHT} signal. TCS identified the sudden noise as incoherent, triggering \texttt{ABSTAIN}.
-    \item \textbf{Result}: The system successfully distinguished between ``valid novelty'' (stable drift) and ``invalid corruption'' (shock), a distinction impossible with standard uncertainty estimation.
-\end{itemize}
+We first consider an applied AI pipeline where downstream components assume upstream embeddings are semantically valid. In a simulated retrieval stream, the system processed nominal inputs, then gradual domain shift, and finally abrupt corruption. \textbf{ResLik} reported increasing discrepancy under drift, while \textbf{TCS} identified sudden noise injection as incoherent (ABSTAIN). Standard uncertainty estimates typically conflate these cases, whereas RLCS distinguishes valid novelty from invalid corruption.
 
 \subsection{Robotics Perception}
-In a simulated sensor fusion stack (Lidar + Camera), we introduced a ``sensor blinding'' event (e.g., sudden rain) affecting one modality.
-\begin{itemize}
-    \item \textbf{Scenario}: Lidar embedding diverged from the Camera embedding due to noise injection.
-    \item \textbf{Behavior}: The Agreement Sensor detected the divergence ($A \to 0$). ResLik identified the Lidar embedding as OOD ($D_{\text{pop}} \uparrow$).
-    \item \textbf{Result}: The Control Surface emitted a \texttt{DEFER} signal specifically for the Lidar stream, allowing the external controller to switch to a ``Camera-Dominant'' navigation mode safely.
-\end{itemize}
+We next evaluate RLCS in a robotics perception stack with redundant Lidar and camera-based encoders. Under nominal conditions, modalities produce consistent representations. A simulated ``sensor blinding'' event degraded the Lidar signal. The \textbf{Agreement Sensor} detected divergence, while \textbf{ResLik} identified the Lidar representation as OOD, triggering a DEFER signal specifically for that stream.
 
 \subsection{Data Systems}
-In a high-throughput ingestion pipeline, we simulated concept drift versus data corruption.
-\begin{itemize}
-    \item \textbf{Scenario}: A data stream experienced concept drift (valid evolution) vs. bit-flip corruption.
-    \item \textbf{Behavior}: Corruption events (random noise) triggered simultaneous failures in ResLik and TCS. Concept drift triggered ResLik failure but TCS pass (stable evolution).
-    \item \textbf{Result}: The system automatically tagged drifting data for retraining (\texttt{PROCEED_WITH_TAG}) while dropping corrupted data (\texttt{ABSTAIN}), automating data hygiene.
-\end{itemize}
+Finally, we consider a high-throughput ingestion pipeline. In a continuous stream, corruption triggered simultaneous failures in ResLik and TCS, while concept drift triggered ResLik failure but TCS pass. This allowed the system to automatically tag drifting data for retraining while dropping corrupted data (ABSTAIN), automating data hygiene without human intervention.
+
+\subsection{Summary of Demonstrated Behavior}
+Across all domains, RLCS exhibits three consistent properties: failure-mode separation, architectural generality, and non-intrusive integration. Reliability is made explicit, interpretable, and actionable at the system level without entangling it with model optimization.
 
 \section{Limitations and Failure Modes}
+RLCS improves the observability of reliability at the representation level, but it does not eliminate uncertainty or failure. The paradigm is intentionally constrained, and its limitations follow directly from its design principles.
 
-While RLCS improves observability, it is subject to structural limitations:
-\begin{enumerate}
-    \item \textbf{Reference Quality}: ResLik is only as good as the reference statistics ($\mu, \sigma$). If the ``clean'' reference set contains outliers, the sensor will be desensitized.
-    \item \textbf{Forward-Only Constraint}: Because RLCS v1.0 is not differentiable, it cannot be used to regularize the encoder during training.
-    \item \textbf{Ambiguity}: In cases where sensors conflict (e.g., Agreement is Low but ResLik is High), RLCS reports the conflict but cannot resolve it. It requires the external controller to have a fallback policy.
-\end{enumerate}
+\subsection{Dependence on Reference Quality}
+Population-level sensors such as ResLik rely on fixed reference statistics ($\mu, \sigma$) derived from a validated dataset. If this reference set is poorly curated---containing systematic outliers, mislabeled data, or unrepresentative samples---the resulting diagnostics will be correspondingly degraded. In such cases, population deviations may be underreported, novelty detection may become desensitized, and corruption may be misclassified as benign variation. This limitation is structural rather than algorithmic: RLCS does not infer reference validity online. Reference construction and maintenance remain a system responsibility.
 
-Crucially, \textbf{RLCS exposes reliability; it does not resolve ambiguity.} It shifts the burden of resolution from implicit model weights to explicit system policy.
+\subsection{Forward-only Constraint}
+The current RLCS formulation is forward-only and non-differentiable. Sensors are evaluated strictly at inference time and do not participate in gradient-based optimization. As a result, RLCS cannot directly regularize representation learning during training, reliability signals cannot be backpropagated into the encoder, and adaptation to new operating regimes requires external updates. This constraint is deliberate. It preserves determinism, auditability, and separation of concerns.
+
+\subsection{Ambiguity is Exposed, Not Resolved}
+When sensors emit conflicting diagnostics---e.g., strong population consistency alongside low cross-view agreement---RLCS does not attempt to resolve the conflict. Instead, the conflict itself is surfaced as a reliability signal, the control surface emits a conservative recommendation, and resolution is delegated to the external controller. This behavior is not a deficiency but a design choice. Attempting to arbitrate between sensors would embed hidden policy logic into the sensing layer, undermining interpretability and auditability.
+
+\subsection{Coverage is Not Exhaustive}
+RLCS sensors are designed to detect classes of failure, not all possible failures. Certain conditions remain outside their scope, including common-mode failures affecting all modalities identically, semantically incorrect but statistically consistent representations, and adversarial manipulations that preserve latent statistics. RLCS does not claim completeness. It provides structured observability, not guarantees of correctness.
+
+\subsection{Summary}
+RLCS makes reliability visible and actionable, but it does not validate task correctness, replace robust training, or eliminate the need for system-level policy design. Its role is diagnostic, not corrective. \textbf{RLCS exposes reliability; it does not resolve ambiguity.} By shifting uncertainty handling from implicit model behavior to explicit system logic, RLCS enables safer, more accountable deployment of learned components.
 
 \section{Related Work}
+RLCS intersects with several active research areas spanning machine learning, uncertainty estimation, and safety-critical systems. Rather than competing directly with these approaches, RLCS is best understood as an architectural complement that reframes reliability as a system-level observability problem.
 
-\textbf{Uncertainty Estimation}: Methods like MC-Dropout \citep{gal2016dropout} and Deep Ensembles \citep{lakshminarayanan2017simple} estimate epistemic uncertainty. RLCS differs by focusing on latent consistency rather than output probability, and by prioritizing runtime efficiency ($O(1)$) over probabilistic exactness.
+\subsection{Uncertainty Estimation and Model Confidence}
+A substantial body of work treats reliability as a form of uncertainty estimation learned by the model itself. Bayesian Neural Networks and approximate Bayesian methods such as Monte Carlo Dropout \citep{gal2016dropout} aim to capture epistemic uncertainty through stochastic inference. Similarly, Deep Ensembles \citep{lakshminarayanan2017simple} estimate predictive uncertainty by aggregating multiple independently trained models.
 
-\textbf{Out-of-Distribution Detection}: Approaches such as ODIN \citep{hendrycks2017baseline} and Mahalanobis distance detectors \citep{lee2018simple} share mathematical roots with ResLik. However, RLCS frames these not as classification tasks (``Is this OOD?'') but as control signals (``Should we act on this?''), integrated into a broader multi-sensor architecture.
+While effective in controlled settings, these approaches incur significant computational overhead at inference time and conflate uncertainty estimation with prediction. More importantly, they expose uncertainty only at the output layer, offering limited insight into why a model is uncertain or whether its internal representation is valid. RLCS differs fundamentally in both scope and intent. It does not estimate probabilistic uncertainty, nor does it attempt to approximate Bayesian inference. Instead, it deterministically measures consistency of latent representations relative to explicit reference frames.
 
-\textbf{Control Theory}: Simplex Architectures \citep{sha2001using} in safety-critical systems use a verified safety controller to override a complex performance controller. RLCS brings a similar ``safety envelope'' concept to the latent space of neural networks.
+\subsection{Out-of-Distribution (OOD) Detection}
+OOD detection has been extensively studied as a classification or scoring problem. Early baselines relied on softmax confidence \citep{hendrycks2017baseline}, while later approaches introduced input perturbations (ODIN; \citealp{liang2018enhancing}) or distance-based methods using Mahalanobis statistics in feature space \citep{lee2018simple}.
+
+ResLik shares mathematical similarities with feature-space OOD detectors, particularly in its use of normalized deviations from reference statistics. However, the framing is deliberately different. Traditional OOD methods aim to answer the question ``Is this input out-of-distribution?'' as a binary or probabilistic classification task. RLCS reframes this question as ``Should the system act on this representation?'' Population-level deviation is treated as \textbf{diagnostic evidence}, not a final decision. Moreover, RLCS explicitly supports multiple orthogonal sensors (temporal, cross-view), whereas most OOD methods operate in isolation.
+
+\subsection{Representation and Feature Space Analysis}
+Several works have explored monitoring internal representations for model introspection or failure detection. Influence functions, activation statistics, and layer-wise diagnostics have been proposed as tools for debugging and interpretability \citep{koh2017understanding, morcos2018insights}. These approaches are typically retrospective and analytic rather than operational. They are used offline to understand model behavior, not as real-time interlocks in deployed systems. RLCS differs by treating representation monitoring as a first-class runtime component, explicitly designed to sit on the execution path with bounded latency.
+
+\subsection{Runtime Monitoring and ML System Safety}
+In production ML systems, reliability is often handled through external monitoring infrastructure---dashboards, alerts, and logging pipelines \citep{breck2017ml}. While essential, these mechanisms are typically asynchronous and do not gate execution directly. RLCS occupies a different position: it provides inline observability. Sensors operate synchronously on representations and can influence system behavior before downstream components consume unreliable data. This distinction aligns RLCS more closely with safety interlocks than with post-hoc monitoring.
+
+\subsection{Control-Theoretic Inspirations}
+The architectural philosophy of RLCS draws inspiration from control theory, particularly \textbf{Simplex Architectures} for safety-critical systems \citep{sha2001using}. In such systems, a complex, high-performance controller is supervised by a simpler, verified safety controller that intervenes when operating assumptions are violated. RLCS adopts a similar separation of concerns, but applies it to the latent space of learned models. Rather than overriding actions directly, RLCS supervises representations and emits control-relevant signals that external controllers can act upon. Unlike classical control systems, however, RLCS does not require a formal plant model or stability guarantees. Its role is diagnostic rather than corrective.
+
+\subsection{Positioning Summary}
+RLCS is not a replacement for uncertainty estimation, a new OOD detection algorithm, or a control policy. Instead, it provides a systems architecture that unifies latent-space diagnostics, deterministic signaling, and external control. By explicitly separating sensing from acting, RLCS complements existing learning-centric approaches while addressing a gap that they do not target directly: runtime reliability observability.
 
 \section{Discussion and Outlook}
+The RLCS paradigm reframes reliability from a learned artifact of model training into an explicit, system-managed property. By treating latent representations as observable signals rather than opaque intermediates, RLCS shifts the focus of robustness from parameter tuning to architectural design. This shift aligns ML deployment more closely with established principles in systems and control engineering, where observability, separation of concerns, and determinism are foundational.
 
-The RLCS paradigm represents a maturation of ML engineering, moving from ``alchemic'' model tuning to rigorous systems design. By treating latent representations as observable signals, we enable a class of ``self-aware'' data systems that can fail gracefully.
+A key implication of RLCS is that graceful failure becomes a design choice rather than an emergent accident. Systems equipped with representation-level sensing can distinguish between different classes of invalidity---novelty, shock, conflict---and respond conservatively without requiring perfect predictions or calibrated probabilities. This capability is particularly relevant in open-world deployments, where distributional assumptions are routinely violated.
 
-While the current implementation focuses on inference-time safety, the natural extension is \textbf{Differentiable RLCS}. If sensors support gradients, the reliability signal can become a term in the loss function ($\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda \mathcal{L}_{\text{reliability}}$), allowing encoders to learn representations that are inherently more consistent and testable. However, we maintain that the \textit{separation of concerns}---sensing vs. acting---must remain invariant even in differentiable regimes.
+\subsection{Differentiable Extensions}
+The current formulation of RLCS is intentionally forward-only. Sensors operate as fixed, deterministic functions evaluated at inference time. This design preserves auditability and prevents reliability logic from becoming entangled with task optimization. A natural extension is \textbf{Differentiable RLCS}, in which sensor outputs contribute to the training objective:
+\begin{equation}
+    \mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda \, \mathcal{L}_{\text{reliability}}.
+\end{equation}
+Such an approach could encourage encoders to learn representations that are not only predictive, but also stable, consistent, and easier to monitor. However, this extension raises important architectural questions. If sensing signals influence learning, care must be taken to preserve the core RLCS invariants---particularly the separation between sensing and acting. Reliability signals may guide representation formation, but they must not collapse into implicit control policies encoded in the model weights.
+
+\subsection{System-Level Implications}
+Beyond individual models, RLCS suggests a broader perspective on ML system design. Reliability sensing can be standardized across pipelines, reused across domains, and governed independently of model retraining cycles. This opens the possibility of shared reliability infrastructure, where multiple models or modalities are supervised by a common control surface. In such systems, reliability becomes a first-class interface between learning components and operational policy.
+
+\subsection{Open Questions}
+Several open questions remain:
+\begin{itemize}
+    \item How should reference statistics be maintained under long-term deployment and evolving data distributions?
+    \item What are the trade-offs between sensitivity and false positives in different application domains?
+    \item How can RLCS-style observability be extended to generative models and long-horizon decision processes?
+\end{itemize}
+These questions are inherently systems-oriented and may not admit purely algorithmic solutions. RLCS provides a framework within which they can be addressed explicitly rather than implicitly.
+
+\subsection{Perspective}
+RLCS does not aim to replace robust training, uncertainty estimation, or safety engineering. Instead, it complements them by making representation reliability observable, interpretable, and actionable at runtime. The broader perspective is simple: as learning systems become larger and more complex, reliability must move out of the weights and into the architecture. RLCS represents one step toward that goal.
 
 \section{Conclusion}
 
