@@ -21,7 +21,7 @@ In open-world and safety-critical deployments, however, this assumption breaks d
 
 This failure mode exposes a structural gap in modern system design. While controllers and downstream logic consume model outputs to make consequential decisions, they typically lack independent observability into whether the model’s internal representation remains valid. As a result, systems are forced to conflate model confidence with system reliability, even though these notions are not equivalent.
 
-Key observation: Silent failure is not primarily a learning problem, it is an observability problem at the system level.
+A key observation driving this work is that silent failure is not primarily a learning problem; it is an observability problem at the system level.
 
 ### 1.2 Why Learning Alone Cannot Guarantee Reliability
 The dominant response to reliability failures has been to modify the learning process itself. Bayesian neural networks (Gal & Ghahramani, 2016), deep ensembles (Lakshminarayanan et al., 2017), adversarial training (Madry et al., 2018), and calibration techniques aim to encode uncertainty awareness directly into model parameters. While theoretically grounded and empirically effective in controlled benchmarks, these approaches face structural limitations when deployed in real systems.
@@ -57,14 +57,14 @@ This work makes the following contributions:
     This work demonstrates RLCS behavior across applied AI pipelines, robotics perception systems, and high-throughput data ingestion workflows.
     
     ### 1.5 Paper Organization 
-    The remainder of this paper is structured as follows. Section 2 formalizes the notion of reliability and outlines system-level design requirements. Section 3 introduces the RLCS architecture and compliance criteria. Section 4 presents the RLCS sensor taxonomy, followed by mathematical formulations in Section 5. Section 6 describes the control surface design, and Section 7 details sensor composition rules. Section 8 demonstrates RLCS behavior across multiple system domains. Limitations and failure modes are discussed in Section 9, followed by related work in Section 10. We conclude with broader implications and future directions in Sections 11 and 12.
+    The remainder of this paper is structured as follows. Section 2 formalizes the notion of reliability and outlines system-level design requirements. Section 3 introduces the RLCS architecture and compliance criteria. Section 4 presents the RLCS sensor taxonomy, followed by mathematical formulations in Section 5. Section 6 describes the control surface design, and Section 7 details sensor composition rules. Section 8 demonstrates RLCS behavior across multiple system domains. Limitations and failure modes are discussed in Section 9, followed by related work in Section 10. This work concludes with broader implications and future directions in Sections 11 and 12.
     
     ![Figure 1: Schematic overview of the RLCS architecture, illustrating the separation between representation learning (encoder), reliability sensing (sensor array), control signaling (control surface), and external execution (controller).](figures/fig1_architecture.png)
     
     ---
     
     ## 2. Problem Formulation and Design Goals
-    This section formalizes what is meant by reliability in the RLCS paradigm and derives the system-level constraints that any representation-level reliability mechanism must satisfy. We also explicitly delineate the boundaries of the paradigm to prevent misinterpretation.
+    This section formalizes what is meant by reliability in the RLCS paradigm and derives the system-level constraints that any representation-level reliability mechanism must satisfy. This section also explicitly delineates the boundaries of the paradigm to prevent misinterpretation.
     
     
     ### 2.1 What Reliability Is (and Is Not)
@@ -118,7 +118,7 @@ This work makes the following contributions:
 ---
 
 ## 3. Representation-Level Control Surfaces (RLCS)
-This section formalizes Representation-Level Control Surfaces (RLCS) as a systems architecture. We define its components, information flow, and compliance criteria, and distinguish it structurally from adjacent paradigms.
+This section formalizes Representation-Level Control Surfaces (RLCS) as a systems architecture. This section defines its components, information flow, and compliance criteria, and distinguishes it structurally from adjacent paradigms.
 
 ### 3.1 Architectural Overview
 RLCS introduces an explicit reliability observability layer between representation learning and execution. The architecture enforces a unidirectional flow of information and a strict separation of concerns.
@@ -170,15 +170,15 @@ Unlike probabilistic thresholds or learned policies, $\Pi$ is explicitly rule-ba
 
 $$ 
  u = \begin{cases}
-\texttt{ABSTAIN}, & \exists i : s_i(z) > \tau_i^{\text{hard}} \\
-\texttt{DEFER}, & \exists i : s_i(z) > \tau_i^{\text{soft}} \\
-\texttt{DOWNWEIGHT}, & \text{marginal violations} \\
-\texttt{PROCEED}, & \text{otherwise}
+\texttt{ABSTAIN} & \exists i : s_i(z) > \tau_i^{\text{hard}} \\
+\texttt{DEFER} & \exists i : s_i(z) > \tau_i^{\text{soft}} \\
+\texttt{DOWNWEIGHT} & \text{marginal violations} \\
+\texttt{PROCEED} & \text{otherwise}
 \end{cases}
  $$ 
 
 where:
-$\\tau_i^{\text{hard}}$ and $\\tau_i^{\text{soft}}$ are sensor-specific thresholds.
+$\tau_i^{\text{hard}}$ and $\tau_i^{\text{soft}}$ are sensor-specific thresholds.
 
 This mapping ensures:
 • reproducibility,
@@ -201,7 +201,7 @@ Examples include:
 RLCS deliberately excludes $\mathcal{C}$ from its scope.
 This boundary enforces clear responsibility separation:
 • RLCS answers: “Is this representation reliable?”
-• The controller answers: “What should we do about it?”
+• The controller answers: “What should be done about it?”
 
 ### 3.5 RLCS Compliance Criteria
 A system is considered RLCS-compliant if it satisfies the following invariants:
@@ -278,7 +278,7 @@ Each class is defined by what it compares against, not by the specific metric us
 Population-level sensors evaluate whether a representation is statistically consistent with a validated reference population, typically derived from training data.
 
 **Definition**
-Let $\\mathcal{P}$ denote a reference population in latent space, summarized by fixed statistics. A population-level sensor evaluates the deviation of $z$ from $\\mathcal{P}$.
+Let $\mathcal{P}$ denote a reference population in latent space, summarized by fixed statistics. A population-level sensor evaluates the deviation of $z$ from $\mathcal{P}$.
 
 **Failure Modes Detected**
 • Out-of-distribution inputs
@@ -369,7 +369,7 @@ These properties ensure that sensors are predictable, composable, and suitable f
 ### 5.2 Population Level Consistency: ResLik
 The Residual Likelihood Sensor (ResLik) measures deviation from a reference population defined by frozen statistics.
 
-Let $\\mu, \sigma \in \mathbb{R}^d$ denote the mean and standard deviation of latent representations computed over a validated reference dataset. Given an input representation $z$, ResLik computes a normalized residual:
+Let $\mu, \sigma \in \mathbb{R}^d$ denote the mean and standard deviation of latent representations computed over a validated reference dataset. Given an input representation $z$, ResLik computes a normalized residual:
 
 $$ \tilde{z}_i = \frac{z_i - \mu_i}{\sigma_i + \epsilon}, \quad i = 1, \dots, d $$
 
@@ -379,15 +379,15 @@ $$ D_{\text{pop}}(z) = \frac{1}{d} \sum_{i=1}^{d} \left| \tilde{z}_i \right| $$
 
 This scalar summarizes how atypical the representation is relative to the reference population.
 
-To map discrepancy to a bounded consistency signal, ResLik applies an exponential gating function with sensitivity parameter $\\lambda > 0$ and dead-zone threshold $\\tau \geq 0$:
+To map discrepancy to a bounded consistency signal, ResLik applies an exponential gating function with sensitivity parameter $\lambda > 0$ and dead-zone threshold $\tau \geq 0$:
 
-$$ g_{\text{pop}}(z) = \exp\!\left(-\\lambda \cdot \max(0, D_{\text{pop}}(z) - \tau)\right) $$
+$$ g_{\text{pop}}(z) = \exp\!\left(-\lambda \cdot \max(0, D_{\text{pop}}(z) - \tau)\right) $$
 
 The dead-zone ensures that small, benign deviations do not trigger attenuation. As $D_{\text{pop}}$ increases, $g_{\text{pop}}$ decays monotonically toward zero.
 
 **Properties:**
 • $D_{\text{pop}} = 0$ implies perfect population consistency.
-• Sensitivity to outliers is controlled explicitly via $\\lambda$.
+• Sensitivity to outliers is controlled explicitly via $\lambda$.
 • Computational complexity is $O(d)$.
 
 ![Figure 3: Behavioral response of the ResLik gating function.](figures/fig3_reslik_response.png)
@@ -401,13 +401,13 @@ $$ \Delta_t = \| z_t - z_{t-1} \|_2 $$
 
 To ensure scale invariance, this deviation is normalized by the magnitude of the prior state:
 
-$$ D_{\text{time}}(z_t) = \frac{\\Delta_t}{\| z_{t-1} \|_2 + \epsilon} $$
+$$ D_{\text{time}}(z_t) = \frac{\Delta_t}{\| z_{t-1} \|_2 + \epsilon} $$
 
 The normalized drift score is mapped to a consistency signal:
 
-$$ g_{\text{time}}(z_t) = \exp\!\left(-\\alpha \cdot D_{\text{time}}(z_t)\right) $$
+$$ g_{\text{time}}(z_t) = \exp\!\left(-\alpha \cdot D_{\text{time}}(z_t)\right) $$
 
-where $\\alpha > 0$ controls sensitivity to abrupt changes.
+where $\alpha > 0$ controls sensitivity to abrupt changes.
 
 **Properties:**
 • Smooth evolution yields $g_{\text{time}} \approx 1$.
@@ -454,14 +454,14 @@ The control surface $\Pi$ is defined as a deterministic mapping:
 
 $$ \Pi : \mathbb{R}^k \rightarrow \mathcal{U} $$
 
-where $\\mathcal{U}$ is a finite, semantically interpretable signal set.
+where $\mathcal{U}$ is a finite, semantically interpretable signal set.
 
 Given a diagnostic vector
 $d(z) = [D_{\text{pop}}, D_{\text{time}}, D_{\text{agree}}]$,
 
-the role of $\\Pi$ is to compress continuous, high-dimensional evidence into a discrete control recommendation that can be consumed by external system logic.
+the role of $\Pi$ is to compress continuous, high-dimensional evidence into a discrete control recommendation that can be consumed by external system logic.
 
-We define the canonical RLCS signal set as:
+The canonical RLCS signal set is defined as:
 • **PROCEED**
 All diagnostics lie within nominal bounds. The representation is considered valid for normal automated processing.
 
@@ -484,14 +484,14 @@ A typical control surface instantiation is expressed as a monotonic rule set:
 $$ 
 \Pi(d) =
 \begin{cases}
-\texttt{ABSTAIN}, & \exists i : d_i > \tau_i^{\text{hard}} \\
-\texttt{DEFER}, & \exists i : d_i > \tau_i^{\text{soft}} \\
-\texttt{DOWNWEIGHT}, & \text{marginal violations} \\
-\texttt{PROCEED}, & \text{otherwise}
+\texttt{ABSTAIN} & \exists i : d_i > \tau_i^{\text{hard}} \\
+\texttt{DEFER} & \exists i : d_i > \tau_i^{\text{soft}} \\
+\texttt{DOWNWEIGHT} & \text{marginal violations} \\
+\texttt{PROCEED} & \text{otherwise}
 \end{cases}
  $$ 
 
-where $\\tau_i^{\text{hard}}$ and $\\tau_i^{\text{soft}}$ are sensor-specific thresholds.
+where $\tau_i^{\text{hard}}$ and $\tau_i^{\text{soft}}$ are sensor-specific thresholds.
 
 Key properties of this mapping:
 • Monotonicity: Increasing inconsistency cannot produce a less conservative signal.
@@ -659,7 +659,7 @@ These demonstrations support the central claim of this work: reliability can be 
 RLCS improves the observability of reliability at the representation level, but it does not eliminate uncertainty or failure. The paradigm is intentionally constrained, and its limitations follow directly from its design principles.
 
 ### 9.1 Dependence on Reference Quality
-Population-level sensors such as ResLik rely on fixed reference statistics ($\\mu, \sigma$) derived from a validated dataset. If this reference set is poorly curated, containing systematic outliers, mislabeled data, or unrepresentative samples, the resulting diagnostics will be correspondingly degraded.
+Population-level sensors such as ResLik rely on fixed reference statistics ($\mu, \sigma$) derived from a validated dataset. If this reference set is poorly curated, containing systematic outliers, mislabeled data, or unrepresentative samples, the resulting diagnostics will be correspondingly degraded.
 
 In such cases:
 • population deviations may be underreported,
@@ -734,7 +734,7 @@ Several works have explored monitoring internal representations for model intros
 These approaches are typically retrospective and analytic rather than operational. They are used offline to understand model behavior, not as real-time interlocks in deployed systems. RLCS differs by treating representation monitoring as a first-class runtime component, explicitly designed to sit on the execution path with bounded latency.
 
 ### 10.4 Runtime Monitoring and ML System Safety
-In production ML systems, reliability is often handled through external monitoring infrastructure, dashboards, alerts, and logging pipelines (Breck et al., 2017). While essential, these mechanisms are typically asynchronous and do not gate execution directly.
+Production-grade machine learning systems typically manage reliability through external monitoring infrastructure, including dashboards and asynchronous logging pipelines (Breck et al., 2017). While essential, these mechanisms are typically asynchronous and do not gate execution directly.
 
 RLCS occupies a different position: it provides inline observability. Sensors operate synchronously on representations and can influence system behavior before downstream components consume unreliable data.
 
