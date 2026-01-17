@@ -2,19 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2026-01-12
+## [1.2.0] - 2026-01-17
 
 ### Consolidated (RLCS v1.0 Paradigm)
-This release marks the formal stabilization of the **Representation-Level Control Surfaces (RLCS)** paradigm. It consolidates all experimental sensors and documentation into a unified, production-ready framework.
+This release marks the formal stabilization of the **Representation-Level Control Surfaces (RLCS)** paradigm and includes critical infrastructure and C++ integrity fixes.
 
 ### Added
 - **Sensor Suite:** Officially accepted **TCS** (Temporal Consistency) and **Agreement Sensor** (Cross-View) as standard RLCS components alongside ResLik.
 - **Documentation:** Added canonical **Adoption Guide**, **Sensor Composition Rules**, and domain-specific **Replication Guides** (AI, Robotics, Data Systems).
 - **Demos:** Added validated multi-sensor control scenarios demonstrating additive reliability signaling.
+- **CI/CD:** Added comprehensive GitHub Actions workflow (C++ unit tests, Python unit tests, simulations).
+
+### Fixed
+- **C++ Integrity:** Resolved a critical bug where the C++ core could return zero-size vectors. Enforced latent dimensionality in both C++ and Python wrapper.
+- **Build System:** Fixed C++ linking issues (PIC) and upgraded artifact actions to v4.
+- **Package Stability:** Standardized internal paths to ensure robust imports during simulation and testing.
 
 ### Changed
 - **Project Structure:** Reframed repository as the reference implementation of the RLCS paradigm, not just a single algorithm.
-- **Terminlogy:** Standardized terms (Sensing, Signaling, Acting) across all docs.
+- **Terminology:** Standardized terms (Sensing, Signaling, Acting) across all docs.
 
 ## [1.1.0-dev] - 2026-01-12
 
@@ -28,7 +34,7 @@ This release marks the formal stabilization of the **Representation-Level Contro
 - **Cross-Domain Skeletons:** Added example stubs for Applied AI, Robotics, and Data Systems to demonstrate non-biological integration.
 
 ### Note
-- **No numerical or behavioral changes from v1.0.0.** The core math, C++ engine, and forward-pass logic remain frozen.
+- **No numerical or behavioral changes from v1.1.0-dev.** The core math and forward-pass logic remain frozen.
 
 ## [1.0.0] - 2026-01-12
 

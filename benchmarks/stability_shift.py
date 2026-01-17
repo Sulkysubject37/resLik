@@ -1,5 +1,5 @@
 """
-ResLik v1.0.0 Behavioral Benchmark
+# ResLik v1.2.0 Behavioral Benchmark
 Purpose: Test representation stability under controlled noise.
 Non-goals: This is NOT a performance comparison or accuracy benchmark.
 """

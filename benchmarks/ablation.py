@@ -1,5 +1,4 @@
-"""
-ResLik v1.0.0 Behavioral Benchmark
+# ResLik v1.2.0 Behavioral Benchmark
 Purpose: Test over-regularization and unnecessary intervention.
 Non-goals: This is NOT a performance comparison or accuracy benchmark.
 """

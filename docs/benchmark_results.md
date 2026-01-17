@@ -36,4 +36,4 @@ Initial tests (Phase 4) showed aggressive gating on clean data (Gate ~ 0.85). Th
 Sweeping a single feature produced strictly monotonic increases in discrepancy and decreases in gate value.
 
 ## Conclusion
-ResLik v1.0.0 is a robust **safety and stability unit**. It effectively identifies and suppresses statistical outliers and distribution shifts. While it requires manual tuning of $\lambda$ and $\tau$ to balance sensitivity vs. neutrality, its behavior is predictable, monotonic, and well-characterized.
+ResLik v1.2.0 is a robust **safety and stability unit**. It effectively identifies and suppresses statistical outliers and distribution shifts. While it requires manual tuning of $\lambda$ and $\tau$ to balance sensitivity vs. neutrality, its behavior is predictable, monotonic, and well-characterized.

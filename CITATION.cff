@@ -5,11 +5,11 @@ authors:
   - family-names: "Arshad"
     given-names: "MD"
     affiliation: "Jamia Millia Islamia"
-version: 1.0.0
-date-released: 2026-01-12
+version: 1.2.0
+date-released: 2026-01-17
 license: MIT
 url: "https://github.com/sulkysubject37/reslik"
-abstract: "A modality-agnostic representation unit for improving calibration and stability in biological data embeddings via likelihood-consistent gating. v1.0.0 provides a stable, behaviorally-characterized forward-pass unit with integrated diagnostics."
+abstract: "A modality-agnostic representation unit for improving calibration and stability in biological data embeddings via likelihood-consistent gating. v1.2.0 establishes the RLCS paradigm with multi-sensor control surfaces."
 keywords:
   - bioinformatics
   - machine learning
