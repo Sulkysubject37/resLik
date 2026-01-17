@@ -1,0 +1,28 @@
+name: Simulation - Data System (Drift)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install numpy matplotlib
+
+      - name: Run Data System Simulation
+        run: python scripts/workflows/run_data_system_sim.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: data-drift-figure
+          path: figures/sim_data_drift.png
