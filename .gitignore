@@ -31,4 +31,8 @@ cpp/build/
 *.toc
 *.synctex.gz
 *.fls
-*.fdb_latexmkreslik_arxiv_submission.zip
+*.fdb_latexmk
+reslik_arxiv_submission.zip
+
+# Paper
+paper/
