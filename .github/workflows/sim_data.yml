@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install numpy matplotlib
+          pip install . numpy matplotlib
 
       - name: Run Data System Simulation
         run: python scripts/workflows/run_data_system_sim.py

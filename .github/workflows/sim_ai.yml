@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install numpy matplotlib
+          pip install . numpy matplotlib
 
       - name: Run AI Pipeline Simulation
         run: python scripts/workflows/run_ai_pipeline_sim.py

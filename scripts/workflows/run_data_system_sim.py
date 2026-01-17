@@ -2,14 +2,8 @@ import sys
 import os
 import numpy as np
 
-# Add python source directory to sys.path (prepend to avoid conflict with root reslik/ folder)
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../python')))
-# Add project root for scripts import
+# Add project root for scripts import (append to avoid shadowing installed reslik package)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
-
-# Mock the C++ core
-from unittest.mock import MagicMock
-sys.modules['reslik._core'] = MagicMock()
 
 from reslik.sensors.temporal_consistency import TemporalConsistencySensor
 from reslik.sensors.agreement_sensor import AgreementSensor

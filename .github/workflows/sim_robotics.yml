@@ -16,7 +16,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install numpy matplotlib
+          pip install . numpy matplotlib
 
       - name: Run Robotics Simulation
         run: python scripts/workflows/run_robotics_sim.py
