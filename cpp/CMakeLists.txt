@@ -18,6 +18,9 @@ add_library(reslik_core
     src/diagnostics.cpp
 )
 
+# Ensure the static library is built with PIC so it can be linked into the shared module
+set_target_properties(reslik_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_include_directories(reslik_core PUBLIC include)
 
 # Simple C++ test executable (no heavy test framework yet)
