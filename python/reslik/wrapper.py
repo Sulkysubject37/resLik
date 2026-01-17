@@ -108,9 +108,6 @@ class ResLikUnit:
         outputs = []
         diagnostics_list = []
         
-        # DEBUG: Trace execution
-        # print(f"DEBUG: z_in.shape={z_in.shape}, is_batch={is_batch}")
-        
         for i in range(z_in.shape[0]):
             sample = z_in[i]
             out_vec = self._cpp_unit.forward(sample)
@@ -126,20 +123,27 @@ class ResLikUnit:
         
         if not is_batch:
             outputs = outputs[0]
-            if not diagnostics_list:
-                raise RuntimeError("Diagnostics list empty for single sample!")
+            # In single-sample mode, diagnostics_list must have exactly 1 item if z_in check passed.
+            # We assume index 0 exists.
             diagnostics_obj = wrap_diagnostics(diagnostics_list[0])
         else:
-            if not diagnostics_list:
-                 print(f"CRITICAL ERROR: diagnostics_list is empty! z_in.shape={z_in.shape}")
-                 # Create a dummy entry to prevent crash during debug, or let it crash but we see the print
-            
             # Aggregate diagnostics for batch
+            if not diagnostics_list:
+                # Handle empty batch case (though input validation should prevent it)
+                mean_gate = 0.0
+                max_disc = 0.0
+            else:
+                # Explicit float conversion enforces scalar contract and handles mocks if capable
+                mean_gate = float(np.mean([float(d["mean_gate"]) for d in diagnostics_list]))
+                max_disc = float(np.max([float(d["max_discrepancy"]) for d in diagnostics_list]))
+
             agg_dict = {
-                "mean_gate": float(np.mean([d["mean_gate"] for d in diagnostics_list])) if diagnostics_list else 0.0,
-                "max_discrepancy": float(np.max([d["max_discrepancy"] for d in diagnostics_list])) if diagnostics_list else 0.0,
+                "mean_gate": mean_gate,
+                "max_discrepancy": max_disc,
                 "per_sample": diagnostics_list
             }
             diagnostics_obj = wrap_diagnostics(agg_dict)
+            
+        return outputs, diagnostics_obj
             
         return outputs, diagnostics_obj
