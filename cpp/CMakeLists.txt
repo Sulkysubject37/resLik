@@ -9,7 +9,7 @@ find_package(pybind11 CONFIG QUIET)
 
 if(NOT pybind11_FOUND)
     message(STATUS "pybind11 not found via find_package. Attempting to locate via Python...")
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
     
     execute_process(
         COMMAND "${Python3_EXECUTABLE}" -m pybind11 --cmakedir
