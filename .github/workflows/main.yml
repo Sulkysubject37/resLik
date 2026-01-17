@@ -1,0 +1,52 @@
+name: Main CI (Build & Test)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install setuptools scikit-build-core pybind11 numpy matplotlib pytest
+
+      - name: Build and Install Package
+        run: |
+          pip install -v .
+
+      - name: Run Python Unit Tests
+        run: |
+          pytest tests/ -v
+
+      - name: Run C++ Unit Tests (Manual Build)
+        run: |
+          mkdir -p build && cd build
+          cmake ../cpp
+          make
+          ./test_reslik_cpp
+          ./test_normalization
+
+      - name: Run Simulations
+        run: |
+          python scripts/workflows/run_ai_pipeline_sim.py
+          python scripts/workflows/run_data_system_sim.py
+          python scripts/workflows/run_robotics_sim.py
+
+      - name: Upload Simulation Figures
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-results
+          path: figures/*.png
