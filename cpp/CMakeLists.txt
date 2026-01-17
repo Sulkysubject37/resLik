@@ -36,3 +36,5 @@ target_link_libraries(_core PRIVATE reslik_core)
 
 # Install the extension module into the python package
 install(TARGETS _core DESTINATION reslik)
+
+# Force CMake rebuild for v1.0.1
