@@ -39,6 +39,9 @@ struct ResLikUnit::Impl {
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
                          W1(h * d), b1(h, 0.0f),
                          u(d, 0.0f) {
+        if (d <= 0 || h <= 0) {
+            throw std::invalid_argument("ResLikUnit: Dimensions must be positive");
+        }
         // Deterministic initialization: scaled identity or simple Xavier-like
         float scale = std::sqrt(2.0f / (d + h));
         for (int i = 0; i < h; ++i) {
@@ -87,6 +90,11 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
         throw std::runtime_error("Input dimension mismatch in ResLikUnit::forward");
     }
 
+    // Integrity Check
+    if (pImpl->latent_dim <= 0) {
+        throw std::runtime_error("ResLikUnit: Internal state corrupted (latent_dim <= 0)");
+    }
+
     // Step 1: Pre-Normalization (theory.md Step 1)
     normalization::MatrixView view{input.data(), 1, static_cast<size_t>(pImpl->input_dim)};
     std::vector<float> z_tilde = normalization::standardize_per_feature(view);
@@ -111,8 +119,15 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     // Equation: z' = a * exp(-lambda * C_eff)
     float gate = std::exp(-pImpl->lambda * C_eff);
     
-    std::vector<float> output = a;
-    for (float& val : output) val *= gate;
+    // Explicitly enforce output size to preserve dimensionality invariant
+    std::vector<float> output(pImpl->latent_dim);
+    if (a.size() != static_cast<size_t>(pImpl->latent_dim)) {
+         throw std::runtime_error("ResLikUnit: Projection output size mismatch");
+    }
+
+    for (size_t i = 0; i < output.size(); ++i) {
+        output[i] = a[i] * gate;
+    }
 
     // Store diagnostics
     pImpl->last_report.mean_gate_value = gate; // Since gate is scalar per sample here (shared logic simplification)
