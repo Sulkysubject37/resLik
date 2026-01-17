@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.0] - 2026-01-17
+## [1.2.1] - 2026-01-17
 
 ### Consolidated (RLCS v1.0 Paradigm)
 This release marks the formal stabilization of the **Representation-Level Control Surfaces (RLCS)** paradigm and includes critical infrastructure and C++ integrity fixes.
@@ -34,7 +34,7 @@ This release marks the formal stabilization of the **Representation-Level Contro
 - **Cross-Domain Skeletons:** Added example stubs for Applied AI, Robotics, and Data Systems to demonstrate non-biological integration.
 
 ### Note
-- **No numerical or behavioral changes from v1.1.0-dev.** The core math and forward-pass logic remain frozen.
+- **No numerical or behavioral changes from v1.2.1.** The core math and forward-pass logic remain frozen.
 
 ## [1.0.0] - 2026-01-12
 

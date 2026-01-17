@@ -1,5 +1,5 @@
 # resLik — Representation-Level Control Surfaces (RLCS)
-**Version:** v1.2.0
+**Version:** v1.2.1
 
 resLik is the **reference implementation** of the *Representation-Level Control Surfaces (RLCS)* paradigm.  
 It provides a set of lightweight, forward-only sensors that quantify the reliability of latent representations and expose this information as explicit, control-relevant signals.

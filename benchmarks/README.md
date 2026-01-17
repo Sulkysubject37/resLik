@@ -40,9 +40,9 @@ What specific result confirms the hypothesis?
 If the benchmark fails (e.g., ResLik performs worse than baseline), what does that mean?
 *Example: "If ResLik amplifies noise, the gating mechanism is unstable."*
 
-## Benchmarks included in v1.2.0
+## Benchmarks included in v1.2.1
 
-The following scripts are used to characterize v1.2.0 behavior:
+The following scripts are used to characterize v1.2.1 behavior:
 - `stability_shift.py`: Noise damping characterization.
 - `calibration_eval.py`: Discrepancy-error correlation.
 - `distribution_shift.py`: OOD detection sensitivity.

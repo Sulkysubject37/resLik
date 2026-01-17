@@ -1,6 +1,6 @@
-# ResLik v1.2.0 Release Checklist
+# ResLik v1.2.1 Release Checklist
 
-This checklist confirms the state of the repository at the time of the v1.2.0 release.
+This checklist confirms the state of the repository at the time of the v1.2.1 release.
 
 ## What's Included
 - [x] **C++ Core:** Numerically stable forward pass with normalization and gating.

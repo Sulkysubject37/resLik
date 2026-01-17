@@ -1,5 +1,5 @@
 """
-# ResLik v1.2.0 Behavioral Benchmark
+# ResLik v1.2.1 Behavioral Benchmark
 Purpose: Verify internal consistency of ResLik signals.
 Non-goals: This is NOT a performance comparison or accuracy benchmark.
 """
