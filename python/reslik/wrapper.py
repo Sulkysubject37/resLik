@@ -136,8 +136,8 @@ class ResLikUnit:
             
             # Aggregate diagnostics for batch
             agg_dict = {
-                "mean_gate": float(np.mean([d["mean_gate"] for d in diagnostics_list])),
-                "max_discrepancy": float(np.max([d["max_discrepancy"] for d in diagnostics_list])),
+                "mean_gate": float(np.mean([d["mean_gate"] for d in diagnostics_list])) if diagnostics_list else 0.0,
+                "max_discrepancy": float(np.max([d["max_discrepancy"] for d in diagnostics_list])) if diagnostics_list else 0.0,
                 "per_sample": diagnostics_list
             }
             diagnostics_obj = wrap_diagnostics(agg_dict)
