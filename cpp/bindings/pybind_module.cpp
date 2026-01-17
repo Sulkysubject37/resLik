@@ -1,6 +1,7 @@
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include "reslik/reslik_unit.hpp"
 #include "reslik/diagnostics.hpp"
 
@@ -20,15 +21,23 @@ PYBIND11_MODULE(_core, m) {
             std::cout << "DEBUG: ResLikUnit ctor input_dim=" << input_dim << " latent_dim=" << latent_dim << std::endl;
             return new reslik::ResLikUnit(input_dim, latent_dim);
         }), py::arg("input_dim"), py::arg("latent_dim"))
-        .def("forward", [](reslik::ResLikUnit& self, const std::vector<float>& input) {
-            // std::cout << "DEBUG: Binding forward input size=" << input.size() << std::endl;
+        .def("forward", [](reslik::ResLikUnit& self, const std::vector<float>& input) -> py::array_t<float> {
             auto out = self.forward(input);
+            
             if (out.empty()) {
                 std::cerr << "DEBUG: Binding forward returned EMPTY vector!" << std::endl;
-            } else {
-                // std::cout << "DEBUG: Binding forward output size=" << out.size() << std::endl;
+                return py::array_t<float>(0);
             }
-            return out;
+
+            // Create a numpy array of the same size
+            auto result = py::array_t<float>(out.size());
+            py::buffer_info buf = result.request();
+            float* ptr = static_cast<float*>(buf.ptr);
+
+            // Copy data
+            std::memcpy(ptr, out.data(), out.size() * sizeof(float));
+
+            return result;
         }, py::arg("input"), "Apply ResLik gating to a single input vector.")
         .def("set_reference_stats", &reslik::ResLikUnit::set_reference_stats, 
              py::arg("mu_ref"), py::arg("sigma_ref"), 
