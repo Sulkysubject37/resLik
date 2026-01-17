@@ -6,6 +6,8 @@
 #include <cmath>
 #include <numeric>
 #include <algorithm>
+#include <cassert>
+#include <stdexcept>
 
 namespace reslik {
 
@@ -15,8 +17,8 @@ static float gelu(float x) {
 }
 
 struct ResLikUnit::Impl {
-    int input_dim;  // d
-    int latent_dim; // h
+    const int input_dim;  // d (const to enforce invariant)
+    const int latent_dim; // h (const to enforce invariant)
 
     // Parameters for Step 2: f = GELU(W1 * z + b1)
     std::vector<float> W1; // (latent_dim, input_dim)
@@ -36,12 +38,20 @@ struct ResLikUnit::Impl {
     // Diagnostics Storage
     diagnostics::DiagnosticReport last_report;
 
+    // Internal Buffers (Preallocated to enforce shape invariance)
+    std::vector<float> f_buffer;
+    std::vector<float> output_buffer;
+
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
                          W1(h * d), b1(h, 0.0f),
-                         u(d, 0.0f) {
+                         u(d, 0.0f),
+                         f_buffer(h, 0.0f),
+                         output_buffer(h, 0.0f) {
+        
         if (d <= 0 || h <= 0) {
-            throw std::invalid_argument("ResLikUnit: Dimensions must be positive");
+            throw std::invalid_argument("ResLikUnit: Dimensions must be positive integers");
         }
+
         // Deterministic initialization: scaled identity or simple Xavier-like
         float scale = std::sqrt(2.0f / (d + h));
         for (int i = 0; i < h; ++i) {
@@ -56,16 +66,20 @@ struct ResLikUnit::Impl {
         }
     }
 
-    std::vector<float> project(const std::vector<float>& z_tilde) {
-        std::vector<float> f(latent_dim, 0.0f);
+    // Project input into f_buffer
+    void project_internal(const std::vector<float>& z_tilde) {
+        // Strict size check for safety
+        if (z_tilde.size() != static_cast<size_t>(input_dim)) {
+             throw std::runtime_error("ResLikUnit: Internal dimension mismatch in project_internal");
+        }
+
         for (int i = 0; i < latent_dim; ++i) {
             float sum = b1[i];
             for (int j = 0; j < input_dim; ++j) {
                 sum += W1[i * input_dim + j] * z_tilde[j];
             }
-            f[i] = gelu(sum);
+            f_buffer[i] = gelu(sum);
         }
-        return f;
     }
 };
 
@@ -86,56 +100,52 @@ void ResLikUnit::set_tau(float tau) {
 }
 
 std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
+    // 1. Validate Input Dimension
     if (input.size() != static_cast<size_t>(pImpl->input_dim)) {
         throw std::runtime_error("Input dimension mismatch in ResLikUnit::forward");
     }
 
-    // Integrity Check
-    if (pImpl->latent_dim <= 0) {
-        throw std::runtime_error("ResLikUnit: Internal state corrupted (latent_dim <= 0)");
-    }
-
-    // Step 1: Pre-Normalization (theory.md Step 1)
+    // 2. Pre-Normalization (theory.md Step 1)
     normalization::MatrixView view{input.data(), 1, static_cast<size_t>(pImpl->input_dim)};
     std::vector<float> z_tilde = normalization::standardize_per_feature(view);
 
-    // Step 2: Shared Feed-Forward Projection (theory.md Step 2)
-    std::vector<float> f = pImpl->project(z_tilde);
+    // 3. Projection (theory.md Step 2) -> Populates pImpl->f_buffer
+    pImpl->project_internal(z_tilde);
 
-    // Step 3: Learned Scale Computation (theory.md Step 3)
+    // 4. Learned Scale (theory.md Step 3)
     float s = gating::compute_learned_scale(z_tilde, pImpl->u);
 
-    // a_i = s_i * f_i
-    std::vector<float> a = f;
-    for (float& val : a) val *= s;
-
-    // Step 4: Likelihood-Consistency Discrepancy (theory.md Step 4)
+    // 5. Discrepancy (theory.md Step 4)
     float C = diagnostics::compute_discrepancy(input, pImpl->mu_ref, pImpl->sigma_ref);
     
-    // Apply Dead-Zone Thresholding
+    // 6. Gating Logic (theory.md Step 5)
     float C_eff = std::max(0.0f, C - pImpl->tau);
-
-    // Step 5: Multiplicative Consistency Gating (theory.md Step 5)
-    // Equation: z' = a * exp(-lambda * C_eff)
     float gate = std::exp(-pImpl->lambda * C_eff);
-    
-    // Explicitly enforce output size to preserve dimensionality invariant
-    std::vector<float> output(pImpl->latent_dim);
-    if (a.size() != static_cast<size_t>(pImpl->latent_dim)) {
-         throw std::runtime_error("ResLikUnit: Projection output size mismatch");
-    }
 
-    for (size_t i = 0; i < output.size(); ++i) {
-        output[i] = a[i] * gate;
+    // 7. Construct Output (Enforcing Shape Invariance)
+    // We write directly into the preallocated output_buffer to guarantee size matches latent_dim
+    // The buffer is effectively 'a' and 'output' combined.
+    
+    // Loop must iterate exactly latent_dim times
+    for (int i = 0; i < pImpl->latent_dim; ++i) {
+        // a_i = s * f_i
+        float a_i = s * pImpl->f_buffer[i];
+        
+        // z'_i = gate * a_i
+        // Multiplicative gating ONLY. No conditional dropping.
+        pImpl->output_buffer[i] = gate * a_i;
     }
 
     // Store diagnostics
-    pImpl->last_report.mean_gate_value = gate; // Since gate is scalar per sample here (shared logic simplification)
-    pImpl->last_report.max_discrepancy = C; // Report RAW discrepancy for diagnostics
-    // Collapsed features detection stub
+    pImpl->last_report.mean_gate_value = gate; 
+    pImpl->last_report.max_discrepancy = C; 
     pImpl->last_report.collapsed_features.clear();
 
-    return output; 
+    // Final Defensive Assertion
+    assert(pImpl->output_buffer.size() == static_cast<size_t>(pImpl->latent_dim));
+
+    // Return copy of the fixed-size buffer
+    return pImpl->output_buffer;
 }
 
 diagnostics::DiagnosticReport ResLikUnit::get_diagnostics() const {
@@ -143,7 +153,7 @@ diagnostics::DiagnosticReport ResLikUnit::get_diagnostics() const {
 }
 
 void ResLikUnit::update_stats(const std::vector<std::vector<float>>& batch) {
-    // Stub for now, Phase 2 focuses on forward pass
+    // Stub
 }
 
 ResLikUnit::~ResLikUnit() = default;
