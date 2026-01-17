@@ -2,7 +2,9 @@ import sys
 import os
 import numpy as np
 
-# Add project root to sys.path
+# Add python source directory to sys.path (prepend to avoid conflict with root reslik/ folder)
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../python')))
+# Add project root for scripts import
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 # Mock the C++ core
