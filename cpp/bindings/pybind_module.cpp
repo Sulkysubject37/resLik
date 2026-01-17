@@ -15,9 +15,20 @@ PYBIND11_MODULE(_core, m) {
         .def_readonly("collapsed_features", &reslik::diagnostics::DiagnosticReport::collapsed_features);
 
     py::class_<reslik::ResLikUnit>(m, "ResLikUnit")
-        .def(py::init<int, int>(), py::arg("input_dim"), py::arg("latent_dim"))
-        .def("forward", &reslik::ResLikUnit::forward, py::arg("input"), 
-             "Apply ResLik gating to a single input vector.")
+        .def(py::init([](int input_dim, int latent_dim) {
+            std::cout << "DEBUG: ResLikUnit ctor input_dim=" << input_dim << " latent_dim=" << latent_dim << std::endl;
+            return new reslik::ResLikUnit(input_dim, latent_dim);
+        }), py::arg("input_dim"), py::arg("latent_dim"))
+        .def("forward", [](reslik::ResLikUnit& self, const std::vector<float>& input) {
+            // std::cout << "DEBUG: Binding forward input size=" << input.size() << std::endl;
+            auto out = self.forward(input);
+            if (out.empty()) {
+                std::cerr << "DEBUG: Binding forward returned EMPTY vector!" << std::endl;
+            } else {
+                // std::cout << "DEBUG: Binding forward output size=" << out.size() << std::endl;
+            }
+            return out;
+        }, py::arg("input"), "Apply ResLik gating to a single input vector.")
         .def("set_reference_stats", &reslik::ResLikUnit::set_reference_stats, 
              py::arg("mu_ref"), py::arg("sigma_ref"), 
              "Set reference statistics for discrepancy calculation.")
