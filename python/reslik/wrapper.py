@@ -25,9 +25,9 @@ class ResLikUnit:
         if input_dim <= 0 or latent_dim <= 0:
             raise ValueError("Dimensions must be positive integers.")
             
-        self.input_dim = input_dim
-        self.latent_dim = latent_dim
-        self._cpp_unit = _core.ResLikUnit(input_dim, latent_dim)
+        self.input_dim = int(input_dim)
+        self.latent_dim = int(latent_dim)
+        self._cpp_unit = _core.ResLikUnit(self.input_dim, self.latent_dim)
         
     def __call__(self, 
                  z_in: Union[np.ndarray, Any], 
@@ -111,6 +111,14 @@ class ResLikUnit:
         for i in range(z_in.shape[0]):
             sample = z_in[i]
             out_vec = self._cpp_unit.forward(sample)
+            
+            # Enforce Latent Dimensionality (RLCS Invariant)
+            if len(out_vec) != self.latent_dim:
+                raise RuntimeError(
+                    f"ResLik integrity violation: C++ core returned dimension {len(out_vec)}, "
+                    f"expected {self.latent_dim}. This implies a corrupted unit state."
+                )
+            
             diag = self._cpp_unit.get_diagnostics()
             
             outputs.append(out_vec)
@@ -119,7 +127,11 @@ class ResLikUnit:
                 "max_discrepancy": diag.max_discrepancy
             })
             
-        outputs = np.array(outputs, dtype=np.float32)
+        if not outputs:
+             # Preserve latent dimension even for empty batches
+             outputs = np.zeros((0, self.latent_dim), dtype=np.float32)
+        else:
+             outputs = np.array(outputs, dtype=np.float32)
         
         if not is_batch:
             outputs = outputs[0]
