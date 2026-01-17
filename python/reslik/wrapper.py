@@ -108,6 +108,9 @@ class ResLikUnit:
         outputs = []
         diagnostics_list = []
         
+        # DEBUG: Trace execution
+        # print(f"DEBUG: z_in.shape={z_in.shape}, is_batch={is_batch}")
+        
         for i in range(z_in.shape[0]):
             sample = z_in[i]
             out_vec = self._cpp_unit.forward(sample)
@@ -123,8 +126,14 @@ class ResLikUnit:
         
         if not is_batch:
             outputs = outputs[0]
+            if not diagnostics_list:
+                raise RuntimeError("Diagnostics list empty for single sample!")
             diagnostics_obj = wrap_diagnostics(diagnostics_list[0])
         else:
+            if not diagnostics_list:
+                 print(f"CRITICAL ERROR: diagnostics_list is empty! z_in.shape={z_in.shape}")
+                 # Create a dummy entry to prevent crash during debug, or let it crash but we see the print
+            
             # Aggregate diagnostics for batch
             agg_dict = {
                 "mean_gate": float(np.mean([d["mean_gate"] for d in diagnostics_list])),
