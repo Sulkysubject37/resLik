@@ -4,6 +4,11 @@ project(reslik_cpp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Disable LTO to prevent potential ABI/Optimization issues with Pybind11
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+set(CMAKE_CXX_VISIBILITY_PRESET default)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN OFF)
+
 # If pybind11_DIR is not set, try to find it normally
 find_package(pybind11 CONFIG QUIET)
 
@@ -47,7 +52,11 @@ add_library(reslik_core
 )
 
 # Ensure the static library is built with PIC so it can be linked into the shared module
-set_target_properties(reslik_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(reslik_core PROPERTIES 
+    POSITION_INDEPENDENT_CODE ON
+    CXX_VISIBILITY_PRESET default
+    VISIBILITY_INLINES_HIDDEN OFF
+)
 
 target_include_directories(reslik_core PUBLIC include)
 
