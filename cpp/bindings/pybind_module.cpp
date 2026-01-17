@@ -1,7 +1,5 @@
-#include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11/numpy.h>
 #include "reslik/reslik_unit.hpp"
 #include "reslik/diagnostics.hpp"
 
@@ -17,31 +15,21 @@ PYBIND11_MODULE(_core, m) {
         .def_readonly("collapsed_features", &reslik::diagnostics::DiagnosticReport::collapsed_features);
 
     py::class_<reslik::ResLikUnit>(m, "ResLikUnit")
-        .def(py::init([](int input_dim, int latent_dim) {
-            std::cout << "DEBUG: ResLikUnit ctor input_dim=" << input_dim << " latent_dim=" << latent_dim << std::endl;
-            return new reslik::ResLikUnit(input_dim, latent_dim);
-        }), py::arg("input_dim"), py::arg("latent_dim"))
-        .def("forward", [](reslik::ResLikUnit& self, const std::vector<float>& input) -> py::array_t<float> {
-            auto out = self.forward(input);
-            
-            if (out.empty()) {
-                std::cerr << "DEBUG: Binding forward returned EMPTY vector!" << std::endl;
-                return py::array_t<float>(0);
-            }
-
-            // Create a numpy array of the same size
-            auto result = py::array_t<float>(out.size());
-            py::buffer_info buf = result.request();
-            float* ptr = static_cast<float*>(buf.ptr);
-
-            // Copy data
-            std::memcpy(ptr, out.data(), out.size() * sizeof(float));
-
-            return result;
-        }, py::arg("input"), "Apply ResLik gating to a single input vector.")
+        .def(py::init<int, int>(), py::arg("input_dim"), py::arg("latent_dim"))
+        .def("forward", &reslik::ResLikUnit::forward, py::arg("input"), 
+             "Apply ResLik gating to a single input vector.")
         .def("set_reference_stats", &reslik::ResLikUnit::set_reference_stats, 
              py::arg("mu_ref"), py::arg("sigma_ref"), 
              "Set reference statistics for discrepancy calculation.")
+        .def("set_lambda", &reslik::ResLikUnit::set_lambda, py::arg("lambda"), 
+             "Set the gating sensitivity parameter.")
+        .def("set_tau", &reslik::ResLikUnit::set_tau, py::arg("tau"), 
+             "Set the discrepancy dead-zone threshold.")
+        .def("get_diagnostics", &reslik::ResLikUnit::get_diagnostics, 
+             "Get the diagnostics from the last forward pass.")
+        .def("update_stats", &reslik::ResLikUnit::update_stats, 
+             "Update internal running statistics (not yet implemented).");
+}
         .def("set_lambda", &reslik::ResLikUnit::set_lambda, py::arg("lambda"), 
              "Set the gating sensitivity parameter.")
         .def("set_tau", &reslik::ResLikUnit::set_tau, py::arg("tau"), 

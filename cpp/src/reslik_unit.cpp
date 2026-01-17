@@ -40,13 +40,11 @@ struct ResLikUnit::Impl {
 
     // Internal Buffers (Preallocated to enforce shape invariance)
     std::vector<float> f_buffer;
-    std::vector<float> output_buffer;
 
     Impl(int d, int h) : input_dim(d), latent_dim(h), 
                          W1(h * d), b1(h, 0.0f),
                          u(d, 0.0f),
-                         f_buffer(h, 0.0f),
-                         output_buffer(h, 0.0f) {
+                         f_buffer(h, 0.0f) {
         
         if (d <= 0 || h <= 0) {
             throw std::invalid_argument("ResLikUnit: Dimensions must be positive integers");
@@ -123,8 +121,8 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     float gate = std::exp(-pImpl->lambda * C_eff);
 
     // 7. Construct Output (Enforcing Shape Invariance)
-    // We write directly into the preallocated output_buffer to guarantee size matches latent_dim
-    // The buffer is effectively 'a' and 'output' combined.
+    // Always preallocate output vector of correct size.
+    std::vector<float> out(pImpl->latent_dim);
     
     // Loop must iterate exactly latent_dim times
     for (int i = 0; i < pImpl->latent_dim; ++i) {
@@ -133,7 +131,7 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
         
         // z'_i = gate * a_i
         // Multiplicative gating ONLY. No conditional dropping.
-        pImpl->output_buffer[i] = gate * a_i;
+        out[i] = gate * a_i;
     }
 
     // Store diagnostics
@@ -142,10 +140,10 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     pImpl->last_report.collapsed_features.clear();
 
     // Final Defensive Assertion
-    assert(pImpl->output_buffer.size() == static_cast<size_t>(pImpl->latent_dim));
+    assert(out.size() == static_cast<size_t>(pImpl->latent_dim));
 
-    // Return copy of the fixed-size buffer
-    return pImpl->output_buffer;
+    // Return the fresh vector
+    return out;
 }
 
 diagnostics::DiagnosticReport ResLikUnit::get_diagnostics() const {
