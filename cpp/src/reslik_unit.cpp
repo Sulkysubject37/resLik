@@ -47,7 +47,8 @@ struct ResLikUnit::Impl {
                          f_buffer(h, 0.0f) {
         
         if (d <= 0 || h <= 0) {
-            throw std::invalid_argument("ResLikUnit: Dimensions must be positive integers");
+             std::string msg = "ResLikUnit: Dimensions must be positive. Got d=" + std::to_string(d) + ", h=" + std::to_string(h);
+             throw std::invalid_argument(msg);
         }
 
         // Deterministic initialization: scaled identity or simple Xavier-like
@@ -98,6 +99,13 @@ void ResLikUnit::set_tau(float tau) {
 }
 
 std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
+    if (!pImpl) {
+        throw std::runtime_error("ResLikUnit::forward: pImpl is null!");
+    }
+    if (pImpl->latent_dim <= 0) {
+        throw std::runtime_error("ResLikUnit::forward: corrupted state (latent_dim <= 0)");
+    }
+
     // 1. Validate Input Dimension
     if (input.size() != static_cast<size_t>(pImpl->input_dim)) {
         throw std::runtime_error("Input dimension mismatch in ResLikUnit::forward");
@@ -140,6 +148,9 @@ std::vector<float> ResLikUnit::forward(const std::vector<float>& input) {
     pImpl->last_report.collapsed_features.clear();
 
     // Final Defensive Assertion
+    if (out.size() == 0) {
+        throw std::runtime_error("ResLikUnit::forward: Generated EMPTY output vector inside C++!");
+    }
     assert(out.size() == static_cast<size_t>(pImpl->latent_dim));
 
     // Return the fresh vector
