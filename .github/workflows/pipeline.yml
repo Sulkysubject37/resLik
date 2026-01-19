@@ -1,4 +1,4 @@
-name: Main CI (Build & Test)
+name: ResLik Pipeline (Sequential)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  full-pipeline:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,18 +18,24 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential
+
+      - name: Install Python Dependencies
         run: |
           pip install --upgrade pip
           pip install setuptools scikit-build-core pybind11 numpy matplotlib pytest
 
-      - name: Build and Install Package
+      - name: Build and Install ResLik (Editable)
         run: |
-          pip install -v .
+          pip install -v -e .
 
-      - name: Run C++ Unit Tests (Manual Build)
+      - name: Run C++ Unit Tests (Sanity Check)
         run: |
-          mkdir -p build && cd build
+          mkdir -p build_test
+          cd build_test
           cmake ../cpp
           make
           ./test_reslik_cpp
@@ -39,14 +45,21 @@ jobs:
         run: |
           pytest tests/ -v
 
-      - name: Run Simulations
+      - name: Run Simulation - AI Pipeline
         run: |
           python scripts/workflows/run_ai_pipeline_sim.py
+
+      - name: Run Simulation - Data Systems
+        run: |
           python scripts/workflows/run_data_system_sim.py
+
+      - name: Run Simulation - Robotics
+        run: |
           python scripts/workflows/run_robotics_sim.py
 
-      - name: Upload Simulation Figures
+      - name: Upload Simulation Results
         uses: actions/upload-artifact@v4
+        if: success()
         with:
-          name: simulation-results
+          name: simulation-figures
           path: figures/*.png
