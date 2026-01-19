@@ -30,12 +30,3 @@ PYBIND11_MODULE(_core, m) {
         .def("update_stats", &reslik::ResLikUnit::update_stats, 
              "Update internal running statistics (not yet implemented).");
 }
-        .def("set_lambda", &reslik::ResLikUnit::set_lambda, py::arg("lambda"), 
-             "Set the gating sensitivity parameter.")
-        .def("set_tau", &reslik::ResLikUnit::set_tau, py::arg("tau"), 
-             "Set the discrepancy dead-zone threshold.")
-        .def("get_diagnostics", &reslik::ResLikUnit::get_diagnostics, 
-             "Get the diagnostics from the last forward pass.")
-        .def("update_stats", &reslik::ResLikUnit::update_stats, 
-             "Update internal running statistics (not yet implemented).");
-}
