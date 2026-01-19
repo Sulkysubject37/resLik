@@ -3,9 +3,6 @@ import numpy as np
 import sys
 from unittest.mock import MagicMock
 
-# Mock the C++ core extension to bypass linking errors
-sys.modules['reslik._core'] = MagicMock()
-
 from reslik.sensors.agreement_sensor import AgreementSensor
 
 class TestAgreementSensor(unittest.TestCase):

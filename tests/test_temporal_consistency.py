@@ -3,9 +3,6 @@ import numpy as np
 import sys
 from unittest.mock import MagicMock
 
-# Mock the C++ core extension to bypass linking errors during pure Python logic tests
-sys.modules['reslik._core'] = MagicMock()
-
 from reslik.sensors.temporal_consistency import TemporalConsistencySensor
 
 class TestTemporalConsistencySensor(unittest.TestCase):

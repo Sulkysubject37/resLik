@@ -2,9 +2,6 @@ import unittest
 import sys
 from unittest.mock import MagicMock
 
-# Mock the C++ core extension to bypass linking errors during pure Python logic tests
-sys.modules['reslik._core'] = MagicMock()
-
 from reslik.diagnostics import ResLikDiagnostics
 from reslik.control_surface import ControlSurface, ControlAction, build_control_signal
 
