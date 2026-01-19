@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include "reslik/reslik_unit.hpp"
 #include "reslik/diagnostics.hpp"
 
@@ -16,8 +17,21 @@ PYBIND11_MODULE(_core, m) {
 
     py::class_<reslik::ResLikUnit>(m, "ResLikUnit")
         .def(py::init<int, int>(), py::arg("input_dim"), py::arg("latent_dim"))
-        .def("forward", &reslik::ResLikUnit::forward, py::arg("input"), 
-             "Apply ResLik gating to a single input vector.")
+        .def("forward", [](reslik::ResLikUnit& self, const std::vector<float>& input) -> py::array_t<float> {
+            std::vector<float> out = self.forward(input);
+            
+            // Create a numpy array of the same size
+            auto result = py::array_t<float>(out.size());
+            py::buffer_info buf = result.request();
+            float* ptr = static_cast<float*>(buf.ptr);
+
+            // Copy data
+            if (!out.empty()) {
+                std::memcpy(ptr, out.data(), out.size() * sizeof(float));
+            }
+
+            return result;
+        }, py::arg("input"), "Apply ResLik gating to a single input vector.")
         .def("set_reference_stats", &reslik::ResLikUnit::set_reference_stats, 
              py::arg("mu_ref"), py::arg("sigma_ref"), 
              "Set reference statistics for discrepancy calculation.")
