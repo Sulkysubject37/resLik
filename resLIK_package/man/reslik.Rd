@@ -2,21 +2,60 @@
 % Please edit documentation in R/reslik.R
 \name{reslik}
 \alias{reslik}
-\title{Population-Level Sensor (ResLik)}
+\title{Residual Likelihood Sensor}
 \usage{
 reslik(z, ref_mean = 0, ref_sd = 1, lambda = 1, tau = 0.05)
 }
 \arguments{
-\item{z}{Numeric vector or matrix.}
+\item{z}{Numeric vector or matrix. The latent representation to evaluate.}
 
-\item{ref_mean}{Numeric. Reference mean.}
+\item{ref_mean}{Numeric or vector. The reference mean of the population. Defaults to 0.}
 
-\item{ref_sd}{Numeric. Reference standard deviation.}
+\item{ref_sd}{Numeric or vector. The reference standard deviation of the population. Defaults to 1.}
 
-\item{lambda}{Numeric. Sensitivity.}
+\item{lambda}{Numeric. The sensitivity of the gate. Higher values suppress OOD samples more aggressively. Defaults to 1.0.}
 
-\item{tau}{Numeric. Dead-zone threshold.}
+\item{tau}{Numeric. The dead-zone threshold. Discrepancies below this value are ignored. Defaults to 0.05.}
+}
+\value{
+A list containing:
+\item{gated}{The gated representation (same shape as \code{z}).}
+\item{diagnostics}{A list of diagnostic metrics:
+\itemize{
+\item \code{discrepancy}: The raw discrepancy scores.
+\item \code{max_discrepancy}: The maximum discrepancy in the batch.
+\item \code{mean_discrepancy}: The mean discrepancy in the batch.
+}
+}
 }
 \description{
+The Residual Likelihood (ResLik) sensor measures the conformity of a latent representation
+against a population reference distribution. It acts as a soft gate, suppressing
+"out-of-distribution" (OOD) signals while preserving "in-distribution" (ID) fidelity.
+}
+\details{
 Population-Level Sensor (ResLik)
+
+The sensor operates in four steps:
+\enumerate{
+\item \strong{Normalization}: The input \code{z} is Z-score normalized using \code{ref_mean} and \code{ref_sd}.
+\item \strong{Discrepancy}: The Mean Absolute Deviation (MAD) is computed for each sample.
+\item \strong{Gating}: A gating factor is computed as \code{exp(-lambda * max(0, discrepancy - tau))}.
+This creates a "dead-zone" \code{tau} where minor deviations are ignored.
+\item \strong{Output}: The original \code{z} is scaled by the gating factor.
+}
+
+This implementation is fully deterministic and stateless.
+}
+\examples{
+# Example 1: In-Distribution Sample
+z_id <- c(0.1, -0.2, 0.05)
+out_id <- reslik(z_id)
+print(out_id$gated) # Should be close to z_id
+
+# Example 2: Out-of-Distribution Sample
+z_ood <- c(5.0, 5.0, 5.0)
+out_ood <- reslik(z_ood)
+print(out_ood$gated) # Should be strongly suppressed
+
 }

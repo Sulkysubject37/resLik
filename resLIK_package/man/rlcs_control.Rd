@@ -2,19 +2,58 @@
 % Please edit documentation in R/control_surface.R
 \name{rlcs_control}
 \alias{rlcs_control}
-\title{Deterministic Control Surface}
+\title{RLCS Control Surface}
 \usage{
 rlcs_control(reslik, tcs = NULL, agreement = NULL, thresholds = list())
 }
 \arguments{
-\item{reslik}{Output from reslik()}
+\item{reslik}{List. The output from the \code{reslik()} function.}
 
-\item{tcs}{Output from tcs() (optional)}
+\item{tcs}{List (Optional). The output from the \code{tcs()} function.}
 
-\item{agreement}{Output from agreement() (optional)}
+\item{agreement}{List (Optional). The output from the \code{agreement()} function.}
 
-\item{thresholds}{List of thresholds}
+\item{thresholds}{List. Custom thresholds to override defaults:
+\itemize{
+\item \code{reslik_max_disc} (default 3.0)
+\item \code{tcs_consistency} (default 0.2)
+\item \code{agreement} (default 0.3)
+}}
+}
+\value{
+A character vector of signals (same length as input batch).
 }
 \description{
+The Control Surface integrates inputs from multiple reliability sensors (ResLik, TCS, Agreement)
+to issue a standardized control signal (\code{PROCEED}, \code{DEFER}, \code{ABSTAIN}). It uses a deterministic,
+rule-based logic to ensure safety and predictability.
+}
+\details{
 Deterministic Control Surface
+
+The logic implements a "Conservative OR" strategy:
+\itemize{
+\item \strong{ABSTAIN}: Triggered if \code{ResLik} discrepancy exceeds \code{reslik_max_disc}.
+This indicates the input is fundamentally invalid (e.g., sensor failure).
+\item \strong{DEFER}: Triggered if \code{TCS} consistency is below \code{tcs_consistency} OR
+\code{Agreement} is below \code{agreement}. This indicates valid but unstable or conflicting data.
+\item \strong{PROCEED}: Default state if no negative flags are raised.
+}
+}
+\examples{
+# Mock Inputs
+res_pass <- list(diagnostics = list(discrepancy = c(0.1), max_discrepancy = 0.1))
+res_fail <- list(diagnostics = list(discrepancy = c(5.0), max_discrepancy = 5.0))
+tcs_pass <- list(consistency = c(0.9))
+tcs_fail <- list(consistency = c(0.1))
+
+# Scenario 1: All Good
+rlcs_control(res_pass, tcs_pass)
+
+# Scenario 2: ResLik Fail -> ABSTAIN
+rlcs_control(res_fail, tcs_pass)
+
+# Scenario 3: TCS Fail -> DEFER
+rlcs_control(res_pass, tcs_fail)
+
 }

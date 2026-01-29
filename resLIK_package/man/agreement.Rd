@@ -7,12 +7,40 @@
 agreement(z1, z2, eps = 1e-08)
 }
 \arguments{
-\item{z1}{First representation}
+\item{z1}{Numeric vector or matrix. The first representation.}
 
-\item{z2}{Second representation}
+\item{z2}{Numeric vector or matrix. The second representation. Must have the same shape as \code{z1}.}
 
-\item{eps}{Small constant}
+\item{eps}{Numeric. Small constant for numerical stability. Defaults to 1e-8.}
+}
+\value{
+A list containing:
+\item{agreement}{The cosine similarity score (-1 to 1).}
 }
 \description{
+The Agreement Sensor measures the alignment between two latent representations, typically
+from different modalities or redundant sensors. It uses cosine similarity to quantify
+agreement.
+}
+\details{
 Agreement Sensor
+
+The sensor computes the cosine similarity between \code{z1} and \code{z2}:
+\deqn{A = \frac{z_1 \cdot z_2}{||z_1|| ||z_2|| + \epsilon}}
+
+Values close to 1 indicate strong agreement, 0 indicates orthogonality (no agreement),
+and -1 indicates opposition. In the context of RLCS, high positive agreement is generally
+required for a \code{PROCEED} signal.
+}
+\examples{
+# Example 1: Perfect Agreement
+z1 <- c(1, 2, 3)
+z2 <- c(2, 4, 6)
+agreement(z1, z2)
+
+# Example 2: Disagreement (Orthogonal)
+z3 <- c(1, 0, 0)
+z4 <- c(0, 1, 0)
+agreement(z3, z4)
+
 }

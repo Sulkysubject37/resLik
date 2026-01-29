@@ -11,4 +11,4 @@ Imports: utils
 Suggests: testthat, stats, knitr, rmarkdown
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3

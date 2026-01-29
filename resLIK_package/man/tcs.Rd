@@ -7,12 +7,40 @@
 tcs(z_t, z_prev, eps = 1e-06)
 }
 \arguments{
-\item{z_t}{Current representation (vector or matrix)}
+\item{z_t}{Numeric vector or matrix. The current latent representation.}
 
-\item{z_prev}{Previous representation (same shape)}
+\item{z_prev}{Numeric vector or matrix. The previous latent representation. Must have the same shape as \code{z_t}.}
 
-\item{eps}{Small constant}
+\item{eps}{Numeric. Small constant to avoid division by zero. Defaults to 1e-6.}
+}
+\value{
+A list containing:
+\item{drift}{The relative drift score (non-negative).}
+\item{consistency}{The consistency score (0 to 1).}
 }
 \description{
+The Temporal Consistency Sensor (TCS) monitors the evolution of a latent representation
+over time. It quantifies "drift" as the relative rate of change and converts it
+into a stability score.
+}
+\details{
 Temporal Consistency Sensor
+
+The sensor computes the L2 distance between the current state \code{z_t} and the previous state \code{z_prev}.
+This distance is normalized by the magnitude of the previous state to produce a relative drift score.
+Consistency is defined as \code{exp(-drift)}.
+
+This metric is essential for detecting "shock" events where the representation changes
+too rapidly for the downstream system to adapt safely.
+}
+\examples{
+# Example 1: Stable Evolution
+z_t0 <- c(1.0, 0.0)
+z_t1 <- c(1.01, 0.01)
+tcs(z_t1, z_t0)
+
+# Example 2: Sudden Shock
+z_shock <- c(5.0, 0.0)
+tcs(z_shock, z_t0)
+
 }
