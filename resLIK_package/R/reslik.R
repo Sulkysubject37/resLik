@@ -1,10 +1,49 @@
 #' Population-Level Sensor (ResLik)
 #'
-#' @param z Numeric vector or matrix.
-#' @param ref_mean Numeric. Reference mean.
-#' @param ref_sd Numeric. Reference standard deviation.
-#' @param lambda Numeric. Sensitivity.
-#' @param tau Numeric. Dead-zone threshold.
+#' @title Residual Likelihood Sensor
+#'
+#' @description
+#' The Residual Likelihood (ResLik) sensor measures the conformity of a latent representation
+#' against a population reference distribution. It acts as a soft gate, suppressing
+#' "out-of-distribution" (OOD) signals while preserving "in-distribution" (ID) fidelity.
+#'
+#' @details
+#' The sensor operates in four steps:
+#' 1. **Normalization**: The input `z` is Z-score normalized using `ref_mean` and `ref_sd`.
+#' 2. **Discrepancy**: The Mean Absolute Deviation (MAD) is computed for each sample.
+#' 3. **Gating**: A gating factor is computed as `exp(-lambda * max(0, discrepancy - tau))`.
+#'    This creates a "dead-zone" `tau` where minor deviations are ignored.
+#' 4. **Output**: The original `z` is scaled by the gating factor.
+#'
+#' This implementation is fully deterministic and stateless.
+#'
+#' @param z Numeric vector or matrix. The latent representation to evaluate.
+#' @param ref_mean Numeric or vector. The reference mean of the population. Defaults to 0.
+#' @param ref_sd Numeric or vector. The reference standard deviation of the population. Defaults to 1.
+#' @param lambda Numeric. The sensitivity of the gate. Higher values suppress OOD samples more aggressively. Defaults to 1.0.
+#' @param tau Numeric. The dead-zone threshold. Discrepancies below this value are ignored. Defaults to 0.05.
+#'
+#' @return A list containing:
+#' \item{gated}{The gated representation (same shape as `z`).}
+#' \item{diagnostics}{A list of diagnostic metrics:
+#'   \itemize{
+#'     \item \code{discrepancy}: The raw discrepancy scores.
+#'     \item \code{max_discrepancy}: The maximum discrepancy in the batch.
+#'     \item \code{mean_discrepancy}: The mean discrepancy in the batch.
+#'   }
+#' }
+#'
+#' @examples
+#' # Example 1: In-Distribution Sample
+#' z_id <- c(0.1, -0.2, 0.05)
+#' out_id <- reslik(z_id)
+#' print(out_id$gated) # Should be close to z_id
+#'
+#' # Example 2: Out-of-Distribution Sample
+#' z_ood <- c(5.0, 5.0, 5.0)
+#' out_ood <- reslik(z_ood)
+#' print(out_ood$gated) # Should be strongly suppressed
+#'
 #' @export
 reslik <- function(z,
                    ref_mean = 0,

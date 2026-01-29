@@ -1,9 +1,50 @@
 #' Deterministic Control Surface
 #'
-#' @param reslik Output from reslik()
-#' @param tcs Output from tcs() (optional)
-#' @param agreement Output from agreement() (optional)
-#' @param thresholds List of thresholds
+#' @title RLCS Control Surface
+#'
+#' @description
+#' The Control Surface integrates inputs from multiple reliability sensors (ResLik, TCS, Agreement)
+#' to issue a standardized control signal (`PROCEED`, `DEFER`, `ABSTAIN`). It uses a deterministic,
+#' rule-based logic to ensure safety and predictability.
+#'
+#' @details
+#' The logic implements a "Conservative OR" strategy:
+#' \itemize{
+#'   \item \strong{ABSTAIN}: Triggered if `ResLik` discrepancy exceeds `reslik_max_disc`.
+#'     This indicates the input is fundamentally invalid (e.g., sensor failure).
+#'   \item \strong{DEFER}: Triggered if `TCS` consistency is below `tcs_consistency` OR
+#'     `Agreement` is below `agreement`. This indicates valid but unstable or conflicting data.
+#'   \item \strong{PROCEED}: Default state if no negative flags are raised.
+#' }
+#'
+#' @param reslik List. The output from the \code{reslik()} function.
+#' @param tcs List (Optional). The output from the \code{tcs()} function.
+#' @param agreement List (Optional). The output from the \code{agreement()} function.
+#' @param thresholds List. Custom thresholds to override defaults:
+#'   \itemize{
+#'     \item \code{reslik_max_disc} (default 3.0)
+#'     \item \code{tcs_consistency} (default 0.2)
+#'     \item \code{agreement} (default 0.3)
+#'   }
+#'
+#' @return A character vector of signals (same length as input batch).
+#'
+#' @examples
+#' # Mock Inputs
+#' res_pass <- list(diagnostics = list(discrepancy = c(0.1), max_discrepancy = 0.1))
+#' res_fail <- list(diagnostics = list(discrepancy = c(5.0), max_discrepancy = 5.0))
+#' tcs_pass <- list(consistency = c(0.9))
+#' tcs_fail <- list(consistency = c(0.1))
+#'
+#' # Scenario 1: All Good
+#' rlcs_control(res_pass, tcs_pass)
+#'
+#' # Scenario 2: ResLik Fail -> ABSTAIN
+#' rlcs_control(res_fail, tcs_pass)
+#'
+#' # Scenario 3: TCS Fail -> DEFER
+#' rlcs_control(res_pass, tcs_fail)
+#'
 #' @export
 rlcs_control <- function(reslik,
                          tcs = NULL,
