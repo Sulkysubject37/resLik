@@ -3,11 +3,11 @@ Type: Package
 Title: Representation-Level Control Surfaces for Reliability Sensing
 Version: 0.1.0
 Author: Md Arshad
-Maintainer: Md Arshad
+Maintainer: Md Arshad <arshad10867c@gmail.com>
 Description: Deterministic reliability sensors operating on latent representations.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: stats
-Suggests: testthat
+Imports: utils
+Suggests: testthat, stats
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
