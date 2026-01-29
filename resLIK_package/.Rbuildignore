@@ -1,2 +1,6 @@
 ^doc$
 ^Meta$
+\.DS_Store$
+^\.gitignore$
+^resLIK_package\.Rcheck$
+^tests/\.DS_Store$
