@@ -124,9 +124,17 @@ It is not intended to function as a drop-in safety layer or a turnkey production
 
 ## Installation
 
-The implementation is provided primarily for reference and experimentation.
-
+### Python (Reference Implementation)
 For local use:
 ```bash
 pip install .
+```
+
+### R Package (resLIK)
+This repository also contains a pure R implementation of the RLCS paradigm.
+See [docs/resLIK_R_package.md](docs/resLIK_R_package.md) for details.
+
+```r
+# From the project root
+devtools::install("resLIK_package")
 ```
