@@ -1,0 +1,78 @@
+---
+title: "Introduction to RLCS"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to RLCS}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+**Representation-Level Control Surfaces (RLCS)** is a paradigm for ensuring the reliability of AI systems by monitoring their internal latent representations. Unlike traditional monitoring that looks at inputs (raw data) or outputs (predictions), RLCS looks at the *intermediate* state.
+
+The `resLIK` package provides a reference implementation of this architecture in R.
+
+## The Problem
+
+Machine Learning models assume that test data comes from the same distribution as training data (IID assumption). In the real world, this is rarely true. Data can:
+*   Drift slowly (Temporal Shift)
+*   Experience sudden shocks (Sensor Failure)
+*   Be fundamentally invalid (Out-of-Distribution)
+
+RLCS provides a mechanism to detect these states *deterministically* and issue a safety signal (`PROCEED`, `DEFER`, `ABSTAIN`) before the model makes a potentially dangerous prediction.
+
+## Core Sensors
+
+### 1. ResLik (Residual Likelihood)
+This is a **Population-Level** sensor. It answers: *"Does this sample look like the training data?"*
+
+It computes the discrepancy (Mean Absolute Deviation) between the current sample and a reference distribution. If the discrepancy is too high, it gates the signal.
+
+### 2. TCS (Temporal Consistency Sensor)
+This is a **Time-Series** sensor. It answers: *"Is the system changing too fast?"*
+
+It measures the drift between consecutive time steps. Even if data is valid (low ResLik discrepancy), a sudden jump (shock) can destabilize a control loop.
+
+### 3. Agreement Sensor
+This is a **Redundancy** sensor. It answers: *"Do my independent sources agree?"*
+
+It computes the cosine similarity between two views (e.g., Lidar vs Camera, or Model A vs Model B). High conflict suggests one source is compromised.
+
+## The Control Surface
+
+The sensors feed into a deterministic **Control Surface**. This component aggregates the diagnostics using a "Conservative OR" logic:
+
+*   **ABSTAIN**: If ResLik detects a fundamental anomaly. The system should stop.
+*   **DEFER**: If TCS or Agreement detect instability. The system should proceed with caution or fallback to a safe mode.
+*   **PROCEED**: Only if all checks pass.
+
+## Example Workflow
+
+```r
+library(resLIK)
+
+# 1. Initialize
+# Assume z_t is a latent vector from your model
+z_t <- c(0.5, -0.2, 0.1) 
+z_prev <- c(0.5, -0.2, 0.0) # Previous state
+
+# 2. Sensing
+# Check population fit
+res_out <- reslik(z_t, ref_mean = 0, ref_sd = 1)
+
+# Check stability
+tcs_out <- tcs(z_t, z_prev)
+
+# 3. Decision
+decision <- rlcs_control(res_out, tcs = tcs_out)
+print(decision)
+# [1] "PROCEED"
+```
