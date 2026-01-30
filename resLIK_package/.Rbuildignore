@@ -5,4 +5,5 @@
 ^resLIK_package\.Rcheck$
 ^tests/\.DS_Store$
 ^rlcs-end-to-end\.html$
-^resLIK_0\.1\.0\.tar\.gz$
+^resLIK_.*\.tar\.gz$
+^resLIK\.Rcheck$

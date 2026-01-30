@@ -20,6 +20,7 @@ The system issues standardized signals. These signals are semantic contracts, no
 
 ```r
 library(resLIK)
+set.seed(42)
 z <- matrix(rnorm(20), nrow=2)
 out <- reslik(z, ref_mean=0, ref_sd=1)
 print(out$gated)
