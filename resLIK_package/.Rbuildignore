@@ -7,3 +7,4 @@
 ^rlcs-end-to-end\.html$
 ^resLIK_.*\.tar\.gz$
 ^resLIK\.Rcheck$
+^cran-comments\.txt$
