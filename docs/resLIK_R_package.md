@@ -57,3 +57,12 @@ The control surface outputs standardized signals that map to specific operationa
 | **PROCEED** | High confidence | Safe to continue with automated processing. |
 | **DEFER** | Uncertainty / Drift | Pause execution. Inspect data, request human review, or retry. **Not an error.** |
 | **ABSTAIN** | Fundamental Invalidity | Stop processing immediately. Fallback to a safety model or hard-coded default. |
+
+## Integration Patterns
+
+RLCS can be integrated into systems using several architectural patterns:
+
+1.  **Logging-only monitoring**: Run sensors in parallel with your primary model. Log control signals without altering execution. Use this to audit model reliability in production before enabling active control.
+2.  **Human-in-the-loop review**: Divert samples that trigger a `DEFER` signal to a human expert for validation. This ensures high-stakes decisions are only automated when the system is confident.
+3.  **Encoder redundancy**: Use the `agreement()` sensor to compare embeddings from two different encoders (e.g., a large transformer and a lightweight distilled model). Proceed only when they align.
+4.  **Safe fallback model**: When an `ABSTAIN` signal is issued, bypass the complex AI model entirely and use a simple, robust, or hard-coded safety policy to maintain system integrity.
