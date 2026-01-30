@@ -8,6 +8,14 @@ RLCS formalizes a missing layer in modern data-driven systems: **representation-
 
 ---
 
+## Versioning Semantics
+
+This project uses the following versioning conventions:
+*   **v0.x (Development)**: Indicates API stability for the core sensors. Mathematical definitions are frozen, but default thresholds may evolve based on cross-domain validation.
+*   **Control Surface Ordering**: The priority of control signals (`ABSTAIN` > `DEFER` > `PROCEED`) is a fundamental invariant and will not change.
+
+---
+
 ## Representation-Level Control Surfaces (RLCS)
 
 RLCS defines a systems architecture in which **reliability is sensed, not learned**, and **signaled, not acted upon**.
