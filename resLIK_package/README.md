@@ -2,6 +2,8 @@
 
 Deterministic reliability sensors operating on latent representations. This package implements the ResLik, TCS, and Agreement sensors along with a deterministic control surface.
 
+**Version:** 0.1.1
+
 ## Control Signal Semantics
 
 The system issues standardized signals. These signals are semantic contracts, not errors.

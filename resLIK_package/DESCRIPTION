@@ -1,7 +1,7 @@
 Package: resLIK
 Type: Package
 Title: Representation-Level Control Surfaces for Reliability Sensing
-Version: 0.1.0
+Version: 0.1.1
 Author: MD. Arshad
 Maintainer: MD. Arshad <arshad10867c@gmail.com>
 Description: Deterministic reliability sensors operating on latent representations.
