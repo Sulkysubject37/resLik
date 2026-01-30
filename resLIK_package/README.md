@@ -2,6 +2,16 @@
 
 Deterministic reliability sensors operating on latent representations. This package implements the ResLik, TCS, and Agreement sensors along with a deterministic control surface.
 
+## Control Signal Semantics
+
+The system issues standardized signals. These signals are semantic contracts, not errors.
+
+| Signal | Meaning | Recommended Action |
+| :--- | :--- | :--- |
+| **PROCEED** | High confidence | Safe to continue. |
+| **DEFER** | Uncertainty / Drift | **Not an error.** Pause, inspect, log, or retry. |
+| **ABSTAIN** | Fundamental Invalidity | Stop. Fallback to safety model. |
+
 ## Usage
 
 ### ResLik Sensor
