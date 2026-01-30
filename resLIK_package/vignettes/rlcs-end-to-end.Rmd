@@ -33,6 +33,8 @@ We generate a sequence of 50 time steps.
 *   **Step 21**: Shock (Sudden jump).
 *   **Steps 22-50**: Recovery (but potentially noisy).
 
+The use of `set.seed(42)` ensures that the generated data and subsequent sensor responses are fully reproducible and deterministic across environments.
+
 ```{r setup_data}
 set.seed(42)
 n_steps <- 50
