@@ -62,6 +62,18 @@ Any subset may be used without altering system semantics.
 
 ---
 
+## Control Signal Semantics
+
+The system issues standardized signals. These signals are semantic contracts, not errors.
+
+| Signal | Meaning | Recommended Action |
+| :--- | :--- | :--- |
+| **PROCEED** | High confidence | Safe to continue. |
+| **DEFER** | Uncertainty / Drift | **Not an error.** Pause, inspect, log, or retry. |
+| **ABSTAIN** | Fundamental Invalidity | Stop. Fallback to safety model. |
+
+---
+
 ## Design Invariants
 
 The following properties are enforced throughout the implementation:

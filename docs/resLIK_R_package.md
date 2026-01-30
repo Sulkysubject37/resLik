@@ -37,3 +37,23 @@ See the package vignette for a conceptual introduction:
 ```r
 vignette("rlcs-introduction", package = "resLIK")
 ```
+
+## Design Invariants
+
+The `resLIK` package adheres to strict design principles to ensure safety and predictability in AI control systems:
+
+1.  **Sensors are diagnostic, not predictive**: Sensors measure the current state of the representation against a reference. They do not predict future failures or correct the data.
+2.  **Control surfaces are deterministic**: Given the same inputs (embeddings and references), the control surface will always yield the same signal. There is no randomness or learning in the decision logic.
+3.  **No single sensor can force PROCEED**: The control logic is a "Conservative OR". A `PROCEED` signal is issued only if *all* active sensors agree the state is valid. Any failure triggers `DEFER` or `ABSTAIN`.
+4.  **Reference statistics must come from a trusted window**: The `ref_mean` and `ref_sd` parameters in `reslik()` must be derived from a known-good calibration dataset (e.g., a holdout validation set). They should not be updated online during inference.
+5.  **Frequent DEFER is expected and conservative**: A `DEFER` signal is not necessarily an error; it indicates uncertainty or slight drift. Systems should be designed to handle frequent deferrals gracefully (e.g., by logging or human review) rather than forcing a decision.
+
+## Control Signal Semantics
+
+The control surface outputs standardized signals that map to specific operational states:
+
+| Signal | Meaning | Recommended System Action |
+| :--- | :--- | :--- |
+| **PROCEED** | High confidence | Safe to continue with automated processing. |
+| **DEFER** | Uncertainty / Drift | Pause execution. Inspect data, request human review, or retry. **Not an error.** |
+| **ABSTAIN** | Fundamental Invalidity | Stop processing immediately. Fallback to a safety model or hard-coded default. |
